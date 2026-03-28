@@ -65,7 +65,8 @@ static_assert(std::is_same_v<
     bool (*)(const std::string&, const std::vector<uint8_t>&,
              const std::vector<uint8_t>&, const std::vector<uint8_t>&)>);
 
-// ── blake3 namespace ─────────────────────────────────────────────────────────
+// ── blake3 namespace (@api-candidate-1.2 — promote to @api-stable before v1.2 release) ──
+// Enforcing signatures here ensures candidate changes are deliberate, not accidental.
 static_assert(std::is_same_v<
     decltype(&blake3::digest),
     std::array<uint8_t, 32> (*)(const std::vector<uint8_t>&)>);
