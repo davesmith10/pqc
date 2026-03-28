@@ -98,25 +98,27 @@ target_compile_definitions(crystals
 
 target_compile_options(crystals PRIVATE -O2 -Wall -Wextra)
 
-target_link_libraries(crystals PUBLIC
-    pqcrystals_kyber512_ref
-    pqcrystals_kyber768_ref
-    pqcrystals_kyber1024_ref
-    pqcrystals_kyber_fips202_ref
-    pqcrystals_dilithium2_ref
-    pqcrystals_dilithium3_ref
-    pqcrystals_dilithium5_ref
-    pqcrystals_dilithium_fips202_ref
-    "${XKCP_LIBDIR}/libXKCP.so"
-    "${SCRYPT_DIR_ABS}/.libs/libscrypt_sse2.a"
-    "${SCRYPT_DIR_ABS}/.libs/libcperciva_cpusupport_detect.a"
-    "${SCRYPT_DIR_ABS}/.libs/libcperciva_shani.a"
-    /usr/local/lib/libmceliece.a
-    /usr/local/lib64/liboqs.a
-    BLAKE3::blake3
-    TBB::tbb
-    OpenSSL::Crypto
-    yaml-cpp
+target_link_libraries(crystals
+    PUBLIC
+        pqcrystals_kyber512_ref
+        pqcrystals_kyber768_ref
+        pqcrystals_kyber1024_ref
+        pqcrystals_kyber_fips202_ref
+        pqcrystals_dilithium2_ref
+        pqcrystals_dilithium3_ref
+        pqcrystals_dilithium5_ref
+        pqcrystals_dilithium_fips202_ref
+        "${XKCP_LIBDIR}/libXKCP.so"
+        "${SCRYPT_DIR_ABS}/.libs/libscrypt_sse2.a"
+        "${SCRYPT_DIR_ABS}/.libs/libcperciva_cpusupport_detect.a"
+        "${SCRYPT_DIR_ABS}/.libs/libcperciva_shani.a"
+        /usr/local/lib/libmceliece.a
+        /usr/local/lib64/liboqs.a
+        TBB::tbb
+        OpenSSL::Crypto
+        yaml-cpp
+    PRIVATE
+        BLAKE3::blake3
 )
 
 # ── test binaries ──────────────────────────────────────────────────────────────

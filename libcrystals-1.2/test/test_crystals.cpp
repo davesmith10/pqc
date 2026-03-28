@@ -784,7 +784,8 @@ static void test_blake3() {
     key1.fill(0xAA);
     key2.fill(0xBB);
 
-    // digest known-answer test: {0x01..0x05} → externally computed reference value
+    // digest known-answer test: {0x01..0x05} → value computed by blake3_hasher
+    // using the BLAKE3 C reference implementation (BLAKE3-team/BLAKE3)
     {
         std::array<uint8_t, 32> expected = {
             0x02, 0x4f, 0x67, 0xc0, 0x42, 0x5a, 0x3d, 0xc0,

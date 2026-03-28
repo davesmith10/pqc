@@ -1,5 +1,5 @@
 #pragma once
-// crystals/crystals.hpp — libcrystals v1.0 public API (frozen)
+// crystals/crystals.hpp — libcrystals v1.2 public API
 //
 // This is the ONLY header consumers should include.
 // All declarations marked @api-stable v1.0 are frozen.
