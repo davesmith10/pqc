@@ -1426,7 +1426,7 @@ void cmd_valtok(const std::string& tray_path, const std::string& token_file);   
 
 // ── BLAKE3 digest ─────────────────────────────────────────────────────────────
 
-namespace blake3 {
+namespace blake3 {  // @api-candidate-1.2
 
 // Hash data with plain BLAKE3. Returns a 32-byte digest.
 std::array<uint8_t, 32> digest(const std::vector<uint8_t>& data); // @api-candidate-1.2
