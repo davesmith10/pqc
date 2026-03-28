@@ -771,6 +771,56 @@ static void test_oqs_groups() {
     }
 }
 
+// ── Section 17: BLAKE3 digest ─────────────────────────────────────────────────
+
+static void test_blake3() {
+    std::printf("=== Section 17: BLAKE3 digest ===\n");
+
+    const std::vector<uint8_t> data  = {0x01, 0x02, 0x03, 0x04, 0x05};
+    const std::vector<uint8_t> data2 = {0x01, 0x02, 0x03, 0x04, 0x06}; // one byte differs
+
+    std::array<uint8_t, 32> key1{};
+    std::array<uint8_t, 32> key2{};
+    key1.fill(0xAA);
+    key2.fill(0xBB);
+
+    // digest is deterministic
+    CHECK(blake3::digest(data) == blake3::digest(data));
+    std::printf("  digest deterministic: OK\n");
+
+    // digest is sensitive to input
+    CHECK(blake3::digest(data) != blake3::digest(data2));
+    std::printf("  digest input sensitivity: OK\n");
+
+    // verify returns true on matching digest
+    CHECK(blake3::verify(data, blake3::digest(data)) == true);
+    std::printf("  verify match: OK\n");
+
+    // verify returns false on tampered data
+    CHECK(blake3::verify(data2, blake3::digest(data)) == false);
+    std::printf("  verify tamper detection: OK\n");
+
+    // keyed_digest differs from plain digest on same input
+    CHECK(blake3::keyed_digest(key1, data) != blake3::digest(data));
+    std::printf("  keyed_digest differs from plain digest: OK\n");
+
+    // keyed_digest is sensitive to key
+    CHECK(blake3::keyed_digest(key1, data) != blake3::keyed_digest(key2, data));
+    std::printf("  keyed_digest key sensitivity: OK\n");
+
+    // keyed_verify returns true on matching digest
+    CHECK(blake3::keyed_verify(key1, data, blake3::keyed_digest(key1, data)) == true);
+    std::printf("  keyed_verify match: OK\n");
+
+    // keyed_verify returns false on tampered data
+    CHECK(blake3::keyed_verify(key1, data2, blake3::keyed_digest(key1, data)) == false);
+    std::printf("  keyed_verify tamper detection: OK\n");
+
+    // keyed_verify returns false on wrong key
+    CHECK(blake3::keyed_verify(key2, data, blake3::keyed_digest(key1, data)) == false);
+    std::printf("  keyed_verify wrong key detection: OK\n");
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 int main() {
@@ -794,6 +844,7 @@ int main() {
         test_mceliece_kem();
         test_slhdsa_sig();
         test_oqs_groups();
+        test_blake3();
     } catch (const std::exception& e) {
         std::fprintf(stderr, "UNCAUGHT EXCEPTION: %s\n", e.what());
         return 1;
