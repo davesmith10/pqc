@@ -70,6 +70,7 @@ add_library(crystals STATIC
     src/oqs_ops.cpp
     src/mceliece_randombytes.c
     src/token_cmd.cpp
+    src/blake3_ops.cpp
     "${KYBER_REF_DIR_ABS}/randombytes.c"
     ${SCRYPT_SOURCES}
 )
