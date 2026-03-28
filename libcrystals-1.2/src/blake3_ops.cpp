@@ -12,7 +12,7 @@ std::array<uint8_t, 32> digest(const std::vector<uint8_t>& data) {
     blake3_hasher_init(&h);
     blake3_hasher_update(&h, data.data(), data.size());
     std::array<uint8_t, 32> out;
-    blake3_hasher_finalize(&h, out.data(), 32);
+    blake3_hasher_finalize(&h, out.data(), BLAKE3_OUT_LEN);
     return out;
 }
 
@@ -28,7 +28,7 @@ std::array<uint8_t, 32> keyed_digest(const std::array<uint8_t, 32>& key,
     blake3_hasher_init_keyed(&h, key.data());
     blake3_hasher_update(&h, data.data(), data.size());
     std::array<uint8_t, 32> out;
-    blake3_hasher_finalize(&h, out.data(), 32);
+    blake3_hasher_finalize(&h, out.data(), BLAKE3_OUT_LEN);
     return out;
 }
 
