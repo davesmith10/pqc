@@ -1423,3 +1423,27 @@ int cmd_pwdecrypt(int argc, char* argv[]);                  // @api-stable v1.0
 
 void cmd_gentok(const std::string& tray_path, const std::string& data_str, int64_t ttl_secs); // @api-stable v1.0
 void cmd_valtok(const std::string& tray_path, const std::string& token_file);                 // @api-stable v1.0
+
+// ── BLAKE3 digest ─────────────────────────────────────────────────────────────
+
+namespace blake3 {
+
+// Hash data with plain BLAKE3. Returns a 32-byte digest.
+std::array<uint8_t, 32> digest(const std::vector<uint8_t>& data); // @api-candidate-1.2
+
+// Recompute the BLAKE3 digest of data and compare to expected in constant time.
+// Returns true if they match.
+bool verify(const std::vector<uint8_t>& data,
+            const std::array<uint8_t, 32>& expected);             // @api-candidate-1.2
+
+// Hash data with BLAKE3 in keyed mode. key must be exactly 32 bytes.
+std::array<uint8_t, 32> keyed_digest(const std::array<uint8_t, 32>& key,
+                                     const std::vector<uint8_t>& data); // @api-candidate-1.2
+
+// Recompute the keyed BLAKE3 digest and compare to expected in constant time.
+// Returns true if they match.
+bool keyed_verify(const std::array<uint8_t, 32>& key,
+                  const std::vector<uint8_t>& data,
+                  const std::array<uint8_t, 32>& expected);       // @api-candidate-1.2
+
+} // namespace blake3
