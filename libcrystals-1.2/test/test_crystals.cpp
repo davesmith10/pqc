@@ -784,9 +784,30 @@ static void test_blake3() {
     key1.fill(0xAA);
     key2.fill(0xBB);
 
-    // digest is deterministic
-    CHECK(blake3::digest(data) == blake3::digest(data));
-    std::printf("  digest deterministic: OK\n");
+    // digest known-answer test: {0x01..0x05} → externally computed reference value
+    {
+        std::array<uint8_t, 32> expected = {
+            0x02, 0x4f, 0x67, 0xc0, 0x42, 0x5a, 0x3d, 0xc0,
+            0x2f, 0xba, 0xf5, 0x8c, 0xb9, 0x3d, 0xe5, 0x13,
+            0x2e, 0x3d, 0x75, 0xc5, 0x19, 0xfa, 0xa0, 0xba,
+            0xda, 0x21, 0x49, 0x1d, 0x88, 0xc9, 0x70, 0x57
+        };
+        CHECK(blake3::digest(data) == expected);
+        std::printf("  digest known-answer test: OK\n");
+    }
+
+    // digest known-answer test: empty input → BLAKE3 spec reference value
+    {
+        const std::vector<uint8_t> empty;
+        std::array<uint8_t, 32> expected_empty = {
+            0xaf, 0x13, 0x49, 0xb9, 0xf5, 0xf9, 0xa1, 0xa6,
+            0xa0, 0x40, 0x4d, 0xea, 0x36, 0xdc, 0xc9, 0x49,
+            0x9b, 0xcb, 0x25, 0xc9, 0xad, 0xc1, 0x12, 0xb7,
+            0xcc, 0x9a, 0x93, 0xca, 0xe4, 0x1f, 0x32, 0x62
+        };
+        CHECK(blake3::digest(empty) == expected_empty);
+        std::printf("  digest known-answer (empty): OK\n");
+    }
 
     // digest is sensitive to input
     CHECK(blake3::digest(data) != blake3::digest(data2));
