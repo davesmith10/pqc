@@ -88,6 +88,13 @@ static_assert(std::is_same_v<
              const std::vector<uint8_t>&,
              const std::array<uint8_t, 32>&)>);
 
+// ── McEliece TrayType enumerators (@api-stable v1.1, verified in v1.2 for completeness) ──
+static_assert(std::is_same_v<decltype(TrayType::McEliece_Level1), TrayType>);
+static_assert(std::is_same_v<decltype(TrayType::McEliece_Level2), TrayType>);
+static_assert(std::is_same_v<decltype(TrayType::McEliece_Level3), TrayType>);
+static_assert(std::is_same_v<decltype(TrayType::McEliece_Level4), TrayType>);
+static_assert(std::is_same_v<decltype(TrayType::McEliece_Level5), TrayType>);
+
 int main() {
     // McEliece tray ID byte round-trips
     assert(tray_id_byte(TrayType::McEliece_Level1) == 0x31);
