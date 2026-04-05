@@ -429,6 +429,14 @@ static int cmd_encrypt_sign(const std::string& tray_path,
         return 3;
     }
 
+    if (!is_tray_complete(tray.tray_type)) {
+        std::cerr << "Error: " << tray.profile_group << " "
+                  << tray_type_to_profile(tray.tray_type)
+                  << " is a partial tray and cannot be used for HYKE"
+                  << " — a full 4-slot tray (classical + PQ KEM and sig) is required\n";
+        return 1;
+    }
+
     const Slot* cl_kem = find_classical_slot(tray);
     const Slot* pq_kem = find_pq_slot(tray);
     const Slot* cl_sig = find_classical_sig_slot(tray);
@@ -595,6 +603,14 @@ static int cmd_verify_decrypt(const std::string& tray_path,
     } catch (const std::exception& e) {
         std::cerr << "Error: cannot load tray: " << e.what() << "\n";
         return 3;
+    }
+
+    if (!is_tray_complete(tray.tray_type)) {
+        std::cerr << "Error: " << tray.profile_group << " "
+                  << tray_type_to_profile(tray.tray_type)
+                  << " is a partial tray and cannot be used for HYKE"
+                  << " — a full 4-slot tray (classical + PQ KEM and sig) is required\n";
+        return 1;
     }
 
     const Slot* cl_kem = find_classical_slot(tray);
