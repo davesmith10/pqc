@@ -291,6 +291,11 @@ inline uint8_t tray_id_byte(TrayType t) {                    // @api-stable v1.0
         case TrayType::FrodoFalcon_Level2: return 0x22;
         case TrayType::FrodoFalcon_Level3: return 0x23;
         case TrayType::FrodoFalcon_Level4: return 0x24;
+        case TrayType::McEliece_Level1:    return 0x31;
+        case TrayType::McEliece_Level2:    return 0x32;
+        case TrayType::McEliece_Level3:    return 0x33;
+        case TrayType::McEliece_Level4:    return 0x34;
+        case TrayType::McEliece_Level5:    return 0x35;
         default: throw std::invalid_argument("Unknown TrayType");
     }
 }
@@ -309,6 +314,11 @@ inline TrayType tray_type_from_id(uint8_t id) {             // @api-stable v1.0
         case 0x22: return TrayType::FrodoFalcon_Level2;
         case 0x23: return TrayType::FrodoFalcon_Level3;
         case 0x24: return TrayType::FrodoFalcon_Level4;
+        case 0x31: return TrayType::McEliece_Level1;
+        case 0x32: return TrayType::McEliece_Level2;
+        case 0x33: return TrayType::McEliece_Level3;
+        case 0x34: return TrayType::McEliece_Level4;
+        case 0x35: return TrayType::McEliece_Level5;
         default: throw std::runtime_error("Unknown HYKE TrayID: " + std::to_string((int)id));
     }
 }

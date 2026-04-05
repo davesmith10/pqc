@@ -8,6 +8,7 @@
 
 #include "crystals/crystals.hpp"
 #include <type_traits>
+#include <cassert>
 
 // ── TrayType enumerators added in API 1.2 ────────────────────────────────────
 static_assert(std::is_same_v<decltype(TrayType::MlKem_Level1),    TrayType>);
@@ -87,4 +88,17 @@ static_assert(std::is_same_v<
              const std::vector<uint8_t>&,
              const std::array<uint8_t, 32>&)>);
 
-int main() { return 0; }
+int main() {
+    // McEliece tray ID byte round-trips
+    assert(tray_id_byte(TrayType::McEliece_Level1) == 0x31);
+    assert(tray_id_byte(TrayType::McEliece_Level2) == 0x32);
+    assert(tray_id_byte(TrayType::McEliece_Level3) == 0x33);
+    assert(tray_id_byte(TrayType::McEliece_Level4) == 0x34);
+    assert(tray_id_byte(TrayType::McEliece_Level5) == 0x35);
+    assert(tray_type_from_id(0x31) == TrayType::McEliece_Level1);
+    assert(tray_type_from_id(0x32) == TrayType::McEliece_Level2);
+    assert(tray_type_from_id(0x33) == TrayType::McEliece_Level3);
+    assert(tray_type_from_id(0x34) == TrayType::McEliece_Level4);
+    assert(tray_type_from_id(0x35) == TrayType::McEliece_Level5);
+    return 0;
+}
