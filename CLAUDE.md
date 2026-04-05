@@ -218,6 +218,8 @@ Both **scotty** and **obi-wan** use the same RPATH strategy:
 - frodokem+falcon ff-level2, ff-level3: encrypt/decrypt/encrypt+sign/verify+decrypt OK (2026-03-23)
 - Pure hybrid sign/verify: all crystals {level2-25519,level2,level3,level5}, mceliece+slhdsa {level2,level3,level4,level5}, mlkem+mldsa {mk-level2,mk-level3,mk-level4}, frodokem+falcon {ff-level2,ff-level3}: OK (2026-03-24)
 - Pure hybrid sign/verify: tampered file → exit 2; wrong tray → tray_id mismatch + exit 2; partial tray (level0/ms-level1) → exit 1; 1MB binary roundtrip OK (2026-03-24)
+- McEliece encrypt+sign/verify+decrypt: level2, level3, level4, level5 roundtrip OK (2026-04-05)
+- McEliece level1 (partial tray) → exit 1 + partial-tray error message (2026-04-05)
 
 ## padme Tool
 CLI: `padme tray-encaps --in-tray <file> --out-png <png> --pwfile /dev/stdin`
