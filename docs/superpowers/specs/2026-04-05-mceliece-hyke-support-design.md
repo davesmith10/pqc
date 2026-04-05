@@ -75,8 +75,9 @@ Two surgical insertions immediately after the tray is loaded in:
 
 ```cpp
 if (!is_tray_complete(tray.tray_type)) {
-    std::cerr << "Error: '" << tray.type_str
-              << "' is a partial tray and cannot be used for HYKE"
+    std::cerr << "Error: " << tray.profile_group << " "
+              << tray_type_to_profile(tray.tray_type)
+              << " is a partial tray and cannot be used for HYKE"
               << " — a full 4-slot tray (classical + PQ KEM and sig) is required\n";
     return 1;
 }
