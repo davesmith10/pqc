@@ -95,8 +95,13 @@ static_assert(std::is_same_v<decltype(TrayType::McEliece_Level3), TrayType>);
 static_assert(std::is_same_v<decltype(TrayType::McEliece_Level4), TrayType>);
 static_assert(std::is_same_v<decltype(TrayType::McEliece_Level5), TrayType>);
 
+// ── is_tray_complete (@api-stable v1.2) ──────────────────────────────────────
+static_assert(std::is_same_v<
+    decltype(&is_tray_complete),
+    bool (*)(TrayType)>);
+
 int main() {
-    // McEliece tray ID byte round-trips
+    // McEliece tray ID byte round-trips (from Task 1)
     assert(tray_id_byte(TrayType::McEliece_Level1) == 0x31);
     assert(tray_id_byte(TrayType::McEliece_Level2) == 0x32);
     assert(tray_id_byte(TrayType::McEliece_Level3) == 0x33);
@@ -107,5 +112,22 @@ int main() {
     assert(tray_type_from_id(0x33) == TrayType::McEliece_Level3);
     assert(tray_type_from_id(0x34) == TrayType::McEliece_Level4);
     assert(tray_type_from_id(0x35) == TrayType::McEliece_Level5);
+
+    // is_tray_complete: partial trays return false
+    assert(!is_tray_complete(TrayType::Level0));
+    assert(!is_tray_complete(TrayType::Level1));
+    assert(!is_tray_complete(TrayType::McEliece_Level1));
+
+    // is_tray_complete: full trays return true
+    assert(is_tray_complete(TrayType::Level2_25519));
+    assert(is_tray_complete(TrayType::Level2));
+    assert(is_tray_complete(TrayType::Level3));
+    assert(is_tray_complete(TrayType::Level5));
+    assert(is_tray_complete(TrayType::McEliece_Level2));
+    assert(is_tray_complete(TrayType::McEliece_Level3));
+    assert(is_tray_complete(TrayType::McEliece_Level4));
+    assert(is_tray_complete(TrayType::McEliece_Level5));
+    assert(is_tray_complete(TrayType::MlKem_Level2));
+    assert(is_tray_complete(TrayType::FrodoFalcon_Level2));
     return 0;
 }

@@ -323,6 +323,15 @@ inline TrayType tray_type_from_id(uint8_t id) {             // @api-stable v1.0
     }
 }
 
+inline bool is_tray_complete(TrayType t) {              // @api-stable v1.2
+    switch (t) {
+        case TrayType::Level0:          return false;   // crystals, classical-only
+        case TrayType::Level1:          return false;   // crystals, PQ-only
+        case TrayType::McEliece_Level1: return false;   // mceliece+slhdsa, PQ-only
+        default:                        return true;
+    }
+}
+
 // Parse 36-char RFC 4122 UUID string to 16 bytes
 inline void parse_uuid(const std::string& uuid_str, uint8_t uuid_bytes[16]) { // @api-stable v1.0
     std::string hex;
