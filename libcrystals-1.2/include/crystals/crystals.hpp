@@ -323,12 +323,14 @@ inline TrayType tray_type_from_id(uint8_t id) {             // @api-stable v1.0
     }
 }
 
-inline bool is_tray_complete(TrayType t) {              // @api-stable v1.2
+inline bool is_tray_complete(TrayType t) noexcept {     // @api-stable v1.2
     switch (t) {
-        case TrayType::Level0:          return false;   // crystals, classical-only
-        case TrayType::Level1:          return false;   // crystals, PQ-only
-        case TrayType::McEliece_Level1: return false;   // mceliece+slhdsa, PQ-only
-        default:                        return true;
+        case TrayType::Level0:              return false;   // crystals, classical-only
+        case TrayType::Level1:              return false;   // crystals, PQ-only
+        case TrayType::McEliece_Level1:     return false;   // mceliece+slhdsa, PQ-only
+        case TrayType::MlKem_Level1:        return false;   // mlkem+mldsa, PQ-only
+        case TrayType::FrodoFalcon_Level1:  return false;   // frodokem+falcon, PQ-only
+        default:                            return true;
     }
 }
 

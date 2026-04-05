@@ -98,7 +98,7 @@ static_assert(std::is_same_v<decltype(TrayType::McEliece_Level5), TrayType>);
 // ── is_tray_complete (@api-stable v1.2) ──────────────────────────────────────
 static_assert(std::is_same_v<
     decltype(&is_tray_complete),
-    bool (*)(TrayType)>);
+    bool (*)(TrayType) noexcept>);
 
 int main() {
     // McEliece tray ID byte round-trips (from Task 1)
@@ -117,6 +117,8 @@ int main() {
     assert(!is_tray_complete(TrayType::Level0));
     assert(!is_tray_complete(TrayType::Level1));
     assert(!is_tray_complete(TrayType::McEliece_Level1));
+    assert(!is_tray_complete(TrayType::MlKem_Level1));
+    assert(!is_tray_complete(TrayType::FrodoFalcon_Level1));
 
     // is_tray_complete: full trays return true
     assert(is_tray_complete(TrayType::Level2_25519));
