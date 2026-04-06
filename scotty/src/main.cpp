@@ -276,8 +276,7 @@ static int cmd_keygen(int argc, char* argv[]) {
                          " (must be level1, level2, level3, or level4)\n";
             return 1;
         }
-    } else {
-        // frodokem+falcon
+    } else if (group_str == "frodokem+falcon") {
         if      (tray_str == "level1") ttype = TrayType::FrodoFalcon_Level1;
         else if (tray_str == "level2") ttype = TrayType::FrodoFalcon_Level2;
         else if (tray_str == "level3") ttype = TrayType::FrodoFalcon_Level3;
@@ -288,6 +287,9 @@ static int cmd_keygen(int argc, char* argv[]) {
                          " (must be level1, level2, level3, or level4)\n";
             return 1;
         }
+    } else {
+		 std::cerr << "Error: unknown profile group '" << group_str << "'\n";
+            return 1;
     }
 
     Tray tray;
