@@ -66,26 +66,31 @@ cross-tray signature confusion between two trays of the same profile.
 `sign` writes a YAML document to stdout:
 
 ```yaml
-signature_id: "a1b2c3d4-..."    # random UUID v4, audit identifier only
-tray_id:      "3f2a1b4c-..."    # tray UUID used for domain separation
-tray_alias:   "alice"
-profile_group: "crystals"
-profile:      "level2-25519"
-input_file:   "document.pdf"
-composite_sig: "BAAAAJQB..."    # base64: u32be(len_cl) || sig_cl || u32be(len_pq) || sig_pq
+---
+version: 1
+id: a1b2c3d4-...           # random UUID v4, audit identifier only
+created: 2026-04-06T12:00:00Z
+tray-id: 3f2a1b4c-...      # tray UUID used for domain separation
+tray-alias: alice
+profile-group: crystals
+profile: level2-25519
+input: document.pdf
+composite-sig: |-           # base64: u32be(len_cl) || sig_cl || u32be(len_pq) || sig_pq
+  BAAAAJQB...
 ```
 
 `verify` reads the `--in-sig` YAML, recomputes `M'` from the tray and the file, and
-checks both signatures. Outputs a YAML confirmation (without `composite_sig`) on success:
+checks both signatures. Outputs a YAML confirmation (without `composite-sig`) on success:
 
 ```yaml
+---
 verified: true
-signature_id: "a1b2c3d4-..."
-tray_id:      "3f2a1b4c-..."
-tray_alias:   "alice"
-profile_group: "crystals"
-profile:      "level2-25519"
-input_file:   "document.pdf"
+id: a1b2c3d4-...
+tray-id: 3f2a1b4c-...
+tray-alias: alice
+profile-group: crystals
+profile: level2-25519
+input: document.pdf
 ```
 
 Requires a tray with **both** a classical sig slot and a PQ sig slot. Partial-key trays
@@ -194,7 +199,7 @@ Wrapped in `-----BEGIN/END HYKE SIGNED FILE-----` PEM armor.
 u32be(len_classical) | sig_classical | u32be(len_pq) | sig_pq
 ```
 
-Base64-encoded in the `composite_sig` field of the output YAML. Both components are
+Base64-encoded in the `composite-sig` field of the output YAML. Both components are
 always present — partial-key trays are rejected before signing. Length prefixes
 accommodate variable-length PQ signatures (e.g. Falcon via `oqs_sig`).
 

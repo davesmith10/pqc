@@ -70,6 +70,22 @@ Tray make_public_tray(const Tray& src);                      // @api-stable v1.0
 // Returns true if tray.id matches the UUID derived from its public keys.
 bool validate_tray_uuid(const Tray& tray);                   // @api-stable v1.0
 
+// Current UTC time as ISO 8601 string (e.g. "2026-04-06T12:00:00Z").
+std::string iso8601_now();                                   // @api-candidate-1.2
+
+// Pure hybrid digital signature document.
+struct Signature {                                           // @api-candidate-1.2
+    int version = 1;
+    std::string id;            // signature UUID
+    std::string created;       // ISO 8601 UTC
+    std::string tray_id;
+    std::string tray_alias;
+    std::string profile_group;
+    std::string profile;       // e.g. "level2-25519"
+    std::string input;         // path to signed file
+    std::vector<uint8_t> composite; // raw composite signature bytes
+};
+
 // ── mcs namespace: McEliece + SLH-DSA keygen ─────────────────────────────────
 
 namespace mcs {
@@ -1430,6 +1446,16 @@ inline std::vector<uint8_t> chacha20poly1305_decrypt(         // @api-stable v1.
 // ── YAML I/O ──────────────────────────────────────────────────────────────────
 
 std::string emit_tray_yaml(const Tray& tray);               // @api-stable v1.0
+
+// Emit a hybrid digital signature document as YAML.
+std::string emit_signature_yaml(const Signature& sig);      // @api-candidate-1.2
+
+// Parse YAML produced by emit_signature_yaml.
+// Throws std::runtime_error if tray-id or composite-sig are missing.
+Signature parse_sig_yaml(const std::string& text);          // @api-candidate-1.2
+
+// Emit a signature verification result as YAML (composite omitted, verified:true added).
+std::string emit_verify_yaml(const Signature& sig);         // @api-candidate-1.2
 
 // ── Tray reader ───────────────────────────────────────────────────────────────
 

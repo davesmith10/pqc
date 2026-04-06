@@ -24,17 +24,33 @@ struct Tray {
     int version = 1;
     std::string alias;
     TrayType tray_type;
-    std::string profile_group;  // always "crystals"
+    std::string profile_group;  // one of the defined groups above
     std::string type_str;       // must be "tray", overridden in SecureTray to "secure-tray"
     std::string id;             // UUID v8
     bool is_public = false;
     std::vector<Slot> slots;
     std::string created;        // ISO 8601 UTC
-    std::string expires;        // ISO 8601 UTC (created + 2 years)
+    std::string expires;        // ISO 8601 UTC (by default, created + 2 years)
 };
 
 // Generate a full tray with keyed material.
 Tray make_tray(TrayType t, const std::string& alias);
+
+// Current UTC time as ISO 8601 string (e.g. "2026-04-06T12:00:00Z").
+std::string iso8601_now();
+
+// Pure hybrid digital signature document.
+struct Signature {
+    int version = 1;
+    std::string id;            // signature UUID
+    std::string created;       // ISO 8601 UTC
+    std::string tray_id;
+    std::string tray_alias;
+    std::string profile_group;
+    std::string profile;       // e.g. "level2-25519"
+    std::string input;         // path to signed file
+    std::vector<uint8_t> composite; // raw composite signature bytes
+};
 
 // Copy src, clear all sk fields, assign a fresh UUID, append ".pub" to alias.
 Tray make_public_tray(const Tray& src);

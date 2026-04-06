@@ -73,3 +73,74 @@ std::string emit_tray_yaml(const Tray& tray) {
 
     return std::string(out.c_str()) + "\n";
 }
+
+// ── Signature YAML ────────────────────────────────────────────────────────────
+
+std::string emit_signature_yaml(const Signature& sig) {
+    YAML::Emitter out;
+
+    out << YAML::BeginDoc;
+    out << YAML::BeginMap;
+
+    out << YAML::Key << "version"       << YAML::Value << sig.version;
+    out << YAML::Key << "id"            << YAML::Value << sig.id;
+    out << YAML::Key << "created"       << YAML::Value << sig.created;
+    out << YAML::Key << "tray-id"       << YAML::Value << sig.tray_id;
+    out << YAML::Key << "tray-alias"    << YAML::Value << sig.tray_alias;
+    out << YAML::Key << "profile-group" << YAML::Value << sig.profile_group;
+    out << YAML::Key << "profile"       << YAML::Value << sig.profile;
+    out << YAML::Key << "input"         << YAML::Value << sig.input;
+
+    out << YAML::Key << "composite-sig" << YAML::Value;
+    {
+        std::string val = b64_for_yaml(sig.composite);
+        if (val.find('\n') != std::string::npos)
+            out << YAML::Literal;
+        out << val;
+    }
+
+    out << YAML::EndMap;
+    out << YAML::EndDoc;
+
+    return std::string(out.c_str()) + "\n";
+}
+
+Signature parse_sig_yaml(const std::string& text) {
+    YAML::Node doc = YAML::Load(text);
+    Signature sig;
+    if (doc["version"])       sig.version       = doc["version"].as<int>();
+    if (doc["id"])            sig.id            = doc["id"].as<std::string>();
+    if (doc["created"])       sig.created       = doc["created"].as<std::string>();
+    if (doc["tray-id"])       sig.tray_id       = doc["tray-id"].as<std::string>();
+    if (doc["tray-alias"])    sig.tray_alias    = doc["tray-alias"].as<std::string>();
+    if (doc["profile-group"]) sig.profile_group = doc["profile-group"].as<std::string>();
+    if (doc["profile"])       sig.profile       = doc["profile"].as<std::string>();
+    if (doc["input"])         sig.input         = doc["input"].as<std::string>();
+    if (doc["composite-sig"]) sig.composite = base64_decode(doc["composite-sig"].as<std::string>());
+
+    if (sig.tray_id.empty())
+        throw std::runtime_error("sig YAML missing required field: tray-id");
+    if (sig.composite.empty())
+        throw std::runtime_error("sig YAML missing required field: composite-sig");
+    return sig;
+}
+
+std::string emit_verify_yaml(const Signature& sig) {
+    YAML::Emitter out;
+
+    out << YAML::BeginDoc;
+    out << YAML::BeginMap;
+
+    out << YAML::Key << "verified"      << YAML::Value << true;
+    out << YAML::Key << "id"            << YAML::Value << sig.id;
+    out << YAML::Key << "tray-id"       << YAML::Value << sig.tray_id;
+    out << YAML::Key << "tray-alias"    << YAML::Value << sig.tray_alias;
+    out << YAML::Key << "profile-group" << YAML::Value << sig.profile_group;
+    out << YAML::Key << "profile"       << YAML::Value << sig.profile;
+    out << YAML::Key << "input"         << YAML::Value << sig.input;
+
+    out << YAML::EndMap;
+    out << YAML::EndDoc;
+
+    return std::string(out.c_str()) + "\n";
+}

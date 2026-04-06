@@ -66,7 +66,7 @@ static std::string derive_uuid(const std::vector<Slot>& slots) {
 
 // ── Timestamps ────────────────────────────────────────────────────────────────
 
-static std::string iso8601_now() {
+std::string iso8601_now() {
     std::time_t t = std::time(nullptr);
     struct tm* gmt = std::gmtime(&t);
     char buf[32];

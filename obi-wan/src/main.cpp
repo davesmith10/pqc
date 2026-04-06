@@ -195,35 +195,6 @@ static CompositeSig unpack_composite_sig(const std::vector<uint8_t>& data) {
     return cs;
 }
 
-struct SigYaml {
-    std::string signature_id;
-    std::string tray_id;
-    std::string input_file;
-    std::string composite_sig;
-};
-
-static SigYaml parse_sig_yaml(const std::string& text) {
-    SigYaml r;
-    std::istringstream ss(text);
-    std::string line;
-    while (std::getline(ss, line)) {
-        auto pos = line.find(": ");
-        if (pos == std::string::npos) continue;
-        std::string key = line.substr(0, pos);
-        std::string val = line.substr(pos + 2);
-        if (val.size() >= 2 && val.front() == '"' && val.back() == '"')
-            val = val.substr(1, val.size() - 2);
-        if      (key == "signature_id")  r.signature_id  = val;
-        else if (key == "tray_id")       r.tray_id       = val;
-        else if (key == "input_file")    r.input_file    = val;
-        else if (key == "composite_sig") r.composite_sig = val;
-    }
-    if (r.tray_id.empty())
-        throw std::runtime_error("sig YAML missing required field: tray_id");
-    if (r.composite_sig.empty())
-        throw std::runtime_error("sig YAML missing required field: composite_sig");
-    return r;
-}
 
 // ── encrypt command ───────────────────────────────────────────────────────────
 
@@ -847,16 +818,17 @@ static int cmd_pure_sign(const std::string& tray_path,
         std::cerr << "Error: PQ signing failed: " << e.what() << "\n"; return 2;
     }
 
-    auto composite     = pack_composite_sig(sig_cl, sig_pq);
-    auto composite_b64 = base64_encode(composite.data(), composite.size());
+    Signature sig;
+    sig.id            = sig_id;
+    sig.created       = iso8601_now();
+    sig.tray_id       = tray.id;
+    sig.tray_alias    = tray.alias;
+    sig.profile_group = tray.profile_group;
+    sig.profile       = tray.type_str;
+    sig.input         = in_file_path;
+    sig.composite     = pack_composite_sig(sig_cl, sig_pq);
 
-    std::cout << "signature_id: \"" << sig_id          << "\"\n"
-              << "tray_id: \""      << tray.id          << "\"\n"
-              << "tray_alias: \""   << tray.alias       << "\"\n"
-              << "profile_group: \"" << tray.profile_group << "\"\n"
-              << "profile: \""      << tray_type_to_profile(tray.tray_type) << "\"\n"
-              << "input_file: \""   << in_file_path     << "\"\n"
-              << "composite_sig: \"" << composite_b64   << "\"\n";
+    std::cout << emit_signature_yaml(sig);
     return 0;
 }
 
@@ -882,7 +854,7 @@ static int cmd_pure_verify(const std::string& tray_path,
         return 1;
     }
 
-    SigYaml syaml;
+    Signature syaml;
     try {
         syaml = parse_sig_yaml(read_file_text(in_sig_path));
     } catch (const std::exception& e) {
@@ -922,7 +894,7 @@ static int cmd_pure_verify(const std::string& tray_path,
 
     CompositeSig cs;
     try {
-        cs = unpack_composite_sig(base64_decode(syaml.composite_sig));
+        cs = unpack_composite_sig(syaml.composite);
     } catch (const std::exception& e) {
         std::cerr << "Error: malformed composite sig: " << e.what() << "\n";
         return 2;
@@ -952,13 +924,11 @@ static int cmd_pure_verify(const std::string& tray_path,
         return 2;
     }
 
-    std::cout << "verified: true\n"
-              << "signature_id: \"" << syaml.signature_id << "\"\n"
-              << "tray_id: \""      << tray.id             << "\"\n"
-              << "tray_alias: \""   << tray.alias          << "\"\n"
-              << "profile_group: \"" << tray.profile_group << "\"\n"
-              << "profile: \""      << tray_type_to_profile(tray.tray_type) << "\"\n"
-              << "input_file: \""   << syaml.input_file    << "\"\n";
+    syaml.tray_alias    = tray.alias;
+    syaml.profile_group = tray.profile_group;
+    syaml.profile       = tray.type_str;
+
+    std::cout << emit_verify_yaml(syaml);
     return 0;
 }
 
