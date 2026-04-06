@@ -23,6 +23,7 @@ void decaps(const std::string& alg_name,
             const std::vector<uint8_t>& sk,
             const std::vector<uint8_t>& ct,
             std::vector<uint8_t>& ss_out);
+bool is_oqs_kem(const std::string& alg_name);
 
 } // namespace oqs_kem
 

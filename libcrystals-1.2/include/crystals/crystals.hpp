@@ -151,64 +151,64 @@ bool verify(const std::string& alg_name,
 
 // ── oqs_kem namespace: liboqs KEM operations ─────────────────────────────────
 
-namespace oqs_kem {  // @api-candidate-1.2
+namespace oqs_kem {  // @api-stable v1.2
 
-struct Keys {                          // @api-candidate-1.2
+struct Keys {                          // @api-stable v1.2
     std::vector<uint8_t> pk;
     std::vector<uint8_t> sk;
 };
 
 // Generate a keypair for the named algorithm (e.g. "ML-KEM-512", "FrodoKEM-640-AES").
 // Throws std::runtime_error if alg_name is unknown or liboqs returns an error.
-Keys keygen(const std::string& alg_name);  // @api-candidate-1.2
+Keys keygen(const std::string& alg_name);  // @api-stable v1.2
 
 // Encapsulate against pk; fills ct_out and ss_out.
 void encaps(const std::string& alg_name,
             const std::vector<uint8_t>& pk,
             std::vector<uint8_t>& ct_out,
-            std::vector<uint8_t>& ss_out);  // @api-candidate-1.2
+            std::vector<uint8_t>& ss_out);  // @api-stable v1.2
 
 // Decapsulate ct with sk; fills ss_out.
 void decaps(const std::string& alg_name,
             const std::vector<uint8_t>& sk,
             const std::vector<uint8_t>& ct,
-            std::vector<uint8_t>& ss_out);  // @api-candidate-1.2
+            std::vector<uint8_t>& ss_out);  // @api-stable v1.2
 
 // Returns true if alg_name is handled by this namespace (ML-KEM-* or FrodoKEM-*).
-bool is_oqs_kem(const std::string& alg_name);  // @api-candidate-1.2
+bool is_oqs_kem(const std::string& alg_name);  // @api-stable v1.2
 
 } // namespace oqs_kem
 
 // ── oqs_sig namespace: liboqs signature operations ───────────────────────────
 
-namespace oqs_sig {  // @api-candidate-1.2
+namespace oqs_sig {  // @api-stable v1.2
 
-struct Keys {                          // @api-candidate-1.2
+struct Keys {                          // @api-stable v1.2
     std::vector<uint8_t> pk;
     std::vector<uint8_t> sk;
 };
 
 // Generate a keypair for the named algorithm (e.g. "ML-DSA-44", "Falcon-512").
 // Throws std::runtime_error if alg_name is unknown or liboqs returns an error.
-Keys keygen(const std::string& alg_name);  // @api-candidate-1.2
+Keys keygen(const std::string& alg_name);  // @api-stable v1.2
 
 // Returns true if alg_name is handled by this namespace (ML-DSA-* or Falcon-*).
-bool is_oqs_sig(const std::string& alg_name);  // @api-candidate-1.2
+bool is_oqs_sig(const std::string& alg_name);  // @api-stable v1.2
 
 // Maximum signature size in bytes for the given algorithm.
-size_t sig_bytes(const std::string& alg_name);  // @api-candidate-1.2
+size_t sig_bytes(const std::string& alg_name);  // @api-stable v1.2
 
 // Sign msg with sk; fills sig_out.
 void sign(const std::string& alg_name,
           const std::vector<uint8_t>& sk,
           const std::vector<uint8_t>& msg,
-          std::vector<uint8_t>& sig_out);  // @api-candidate-1.2
+          std::vector<uint8_t>& sig_out);  // @api-stable v1.2
 
 // Verify sig against pk and msg. Returns true if valid.
 bool verify(const std::string& alg_name,
             const std::vector<uint8_t>& pk,
             const std::vector<uint8_t>& msg,
-            const std::vector<uint8_t>& sig);  // @api-candidate-1.2
+            const std::vector<uint8_t>& sig);  // @api-stable v1.2
 
 } // namespace oqs_sig
 

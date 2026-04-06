@@ -1,5 +1,5 @@
 // oqs_ops.cpp — liboqs-backed KEM and signature operations for the
-// oqs_kem and oqs_sig namespaces.  These implement the @api-candidate-1.2
+// oqs_kem and oqs_sig namespaces.  These implement the @api-stable v1.2
 // declarations in crystals/crystals.hpp.
 //
 // Supported KEM algorithms:   ML-KEM-512, ML-KEM-768, ML-KEM-1024,

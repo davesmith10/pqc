@@ -39,6 +39,10 @@ static_assert(std::is_same_v<
     void (*)(const std::string&, const std::vector<uint8_t>&,
              const std::vector<uint8_t>&, std::vector<uint8_t>&)>);
 
+static_assert(std::is_same_v<
+    decltype(&oqs_kem::is_oqs_kem),
+    bool (*)(const std::string&)>);
+
 // ── oqs_sig::Keys struct ─────────────────────────────────────────────────────
 static_assert(std::is_same_v<decltype(oqs_sig::Keys::pk), std::vector<uint8_t>>);
 static_assert(std::is_same_v<decltype(oqs_sig::Keys::sk), std::vector<uint8_t>>);
@@ -131,5 +135,40 @@ int main() {
     assert(is_tray_complete(TrayType::McEliece_Level5));
     assert(is_tray_complete(TrayType::MlKem_Level2));
     assert(is_tray_complete(TrayType::FrodoFalcon_Level2));
+
+    // ── oqs_kem @api-stable v1.2 ──────────────────────────────────────────────────
+    {
+        oqs_kem::Keys k = oqs_kem::keygen("ML-KEM-512");
+        (void)k.pk; (void)k.sk;
+
+        std::vector<uint8_t> ct, ss;
+        oqs_kem::encaps("ML-KEM-512", k.pk, ct, ss);
+
+        std::vector<uint8_t> ss2;
+        oqs_kem::decaps("ML-KEM-512", k.sk, ct, ss2);
+
+        bool b = oqs_kem::is_oqs_kem("ML-KEM-512");
+        (void)b;
+    }
+
+    // ── oqs_sig @api-stable v1.2 ──────────────────────────────────────────────────
+    {
+        oqs_sig::Keys k = oqs_sig::keygen("ML-DSA-44");
+        (void)k.pk; (void)k.sk;
+
+        bool b2 = oqs_sig::is_oqs_sig("ML-DSA-44");
+        (void)b2;
+
+        size_t n = oqs_sig::sig_bytes("ML-DSA-44");
+        (void)n;
+
+        std::vector<uint8_t> msg = {1,2,3};
+        std::vector<uint8_t> sig;
+        oqs_sig::sign("ML-DSA-44", k.sk, msg, sig);
+
+        bool ok = oqs_sig::verify("ML-DSA-44", k.pk, msg, sig);
+        (void)ok;
+    }
+
     return 0;
 }
