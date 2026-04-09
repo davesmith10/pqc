@@ -81,6 +81,11 @@ echo "hello" > /tmp/plain.txt
 ./pqc/obi-wan/build/obi-wan sign   --tray /tmp/alice.tray --in-file /tmp/plain.txt > /tmp/plain.sig.yaml
 ./pqc/obi-wan/build/obi-wan verify --tray /tmp/alice.tray --in-file /tmp/plain.txt --in-sig /tmp/plain.sig.yaml
 
+# obi-wan: gentok / valtok (requires level2 tray — P-256 + ECDSA P-256; level2-25519 is rejected)
+./pqc/scotty/build/scotty keygen --alias alice --profile level2 > /tmp/alice_level2.tray
+./pqc/obi-wan/build/obi-wan gentok --tray /tmp/alice_level2.tray --data "hello" > /tmp/tok.bin
+./pqc/obi-wan/build/obi-wan valtok --tray /tmp/alice_level2.tray /tmp/tok.bin
+
 # scotty: hybrid tray keygen (crystals group, default)
 ./scotty keygen --profile level3 --alias alice                          # YAML to stdout (default)
 ./scotty keygen --alias bob                                             # default profile: level2-25519
