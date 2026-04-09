@@ -323,6 +323,35 @@ bool validate_tray_uuid(const Tray& tray) {
     return derive_uuid(tray.slots) == tray.id;
 }
 
+// ── tray_type_from_str ────────────────────────────────────────────────────────
+
+TrayType tray_type_from_str(const std::string& s) {
+    // crystals group
+    if      (s == "level0")       return TrayType::Level0;
+    else if (s == "level1")       return TrayType::Level1;
+    else if (s == "level2-25519") return TrayType::Level2_25519;
+    else if (s == "level2")       return TrayType::Level2;
+    else if (s == "level3")       return TrayType::Level3;
+    else if (s == "level5")       return TrayType::Level5;
+    // mceliece+slhdsa group
+    else if (s == "ms-level1")    return TrayType::McEliece_Level1;
+    else if (s == "ms-level2")    return TrayType::McEliece_Level2;
+    else if (s == "ms-level3")    return TrayType::McEliece_Level3;
+    else if (s == "ms-level4")    return TrayType::McEliece_Level4;
+    else if (s == "ms-level5")    return TrayType::McEliece_Level5;
+    // mlkem+mldsa group
+    else if (s == "mk-level1")    return TrayType::MlKem_Level1;
+    else if (s == "mk-level2")    return TrayType::MlKem_Level2;
+    else if (s == "mk-level3")    return TrayType::MlKem_Level3;
+    else if (s == "mk-level4")    return TrayType::MlKem_Level4;
+    // frodokem+falcon group
+    else if (s == "ff-level1")    return TrayType::FrodoFalcon_Level1;
+    else if (s == "ff-level2")    return TrayType::FrodoFalcon_Level2;
+    else if (s == "ff-level3")    return TrayType::FrodoFalcon_Level3;
+    else if (s == "ff-level4")    return TrayType::FrodoFalcon_Level4;
+    else throw std::runtime_error("YAML tray: unknown profile '" + s + "'");
+}
+
 // ── make_public_tray ──────────────────────────────────────────────────────────
 
 Tray make_public_tray(const Tray& src) {

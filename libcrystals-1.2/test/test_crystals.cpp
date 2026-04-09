@@ -843,6 +843,66 @@ static void test_blake3() {
     std::printf("  keyed_verify wrong key detection: OK\n");
 }
 
+// ── Section 18: load_tray_yaml tray_type preservation (DEF-001) ──────────────
+// load_tray_yaml() must populate tray_type from the YAML "profile" field
+// for all profile groups, not just when going through load_tray().
+
+static void test_load_tray_yaml_tray_type() {
+    std::printf("=== Section 18: load_tray_yaml tray_type preservation (DEF-001) ===\n");
+
+    // Full round-trip (emit → file → load) for crystals-group profiles.
+    struct Case { TrayType t; const char* type_str; const char* group; size_t slots; };
+    const Case cases[] = {
+        { TrayType::Level0,       "level0",       "crystals", 2 },
+        { TrayType::Level1,       "level1",       "crystals", 2 },
+        { TrayType::Level2,       "level2",       "crystals", 4 },
+        { TrayType::Level2_25519, "level2-25519", "crystals", 4 },
+        { TrayType::Level3,       "level3",       "crystals", 4 },
+        { TrayType::Level5,       "level5",       "crystals", 4 },
+    };
+
+    for (const auto& c : cases) {
+        Tray orig = make_tray(c.t, "test");
+        std::string yaml = emit_tray_yaml(orig);
+
+        std::string path = tmp_path((std::string("lty_") + c.type_str + ".tray").c_str());
+        { std::ofstream f(path); f << yaml; }
+
+        Tray loaded = load_tray_yaml(path);
+
+        CHECK(loaded.tray_type     == c.t);
+        CHECK(loaded.type_str      == c.type_str);
+        CHECK(loaded.profile_group == c.group);
+        CHECK(loaded.id            == orig.id);
+        CHECK(loaded.alias         == orig.alias);
+        CHECK(loaded.slots.size()  == c.slots);
+        std::printf("  %s tray_type preserved: OK\n", c.type_str);
+    }
+
+    // Stub-YAML coverage for non-crystals profile groups: verifies the
+    // tray_type_from_str mapping for each group prefix without expensive
+    // key generation.  One representative per group is sufficient.
+    struct StubCase { const char* profile; const char* group; TrayType expected; };
+    const StubCase stubs[] = {
+        { "ms-level2", "mceliece+slhdsa", TrayType::McEliece_Level2   },
+        { "mk-level2", "mlkem+mldsa",     TrayType::MlKem_Level2      },
+        { "ff-level2", "frodokem+falcon", TrayType::FrodoFalcon_Level2 },
+    };
+
+    for (const auto& s : stubs) {
+        std::string yaml =
+            std::string("profile-group: ") + s.group  + "\n"
+                        "profile: "        + s.profile + "\n"
+                        "slots: []\n";
+        std::string path = tmp_path((std::string("lty_stub_") + s.profile + ".tray").c_str());
+        { std::ofstream f(path); f << yaml; }
+
+        Tray loaded = load_tray_yaml(path);
+        CHECK(loaded.tray_type == s.expected);
+        std::printf("  %s tray_type preserved: OK\n", s.profile);
+    }
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 int main() {
@@ -867,6 +927,7 @@ int main() {
         test_slhdsa_sig();
         test_oqs_groups();
         test_blake3();
+        test_load_tray_yaml_tray_type();
     } catch (const std::exception& e) {
         std::fprintf(stderr, "UNCAUGHT EXCEPTION: %s\n", e.what());
         return 1;

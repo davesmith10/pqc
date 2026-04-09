@@ -40,29 +40,7 @@ static Tray load_tray_yaml(const std::string& path) {
     tray.created       = doc["created"].as<std::string>("");
     tray.expires       = doc["expires"].as<std::string>("");
 
-    if      (tray.type_str == "level0")       tray.tray_type = TrayType::Level0;
-    else if (tray.type_str == "level1")       tray.tray_type = TrayType::Level1;
-    else if (tray.type_str == "level2-25519") tray.tray_type = TrayType::Level2_25519;
-    else if (tray.type_str == "level2")       tray.tray_type = TrayType::Level2;
-    else if (tray.type_str == "level3")       tray.tray_type = TrayType::Level3;
-    else if (tray.type_str == "level5")       tray.tray_type = TrayType::Level5;
-    // mceliece+slhdsa group
-    else if (tray.type_str == "ms-level1")    tray.tray_type = TrayType::McEliece_Level1;
-    else if (tray.type_str == "ms-level2")    tray.tray_type = TrayType::McEliece_Level2;
-    else if (tray.type_str == "ms-level3")    tray.tray_type = TrayType::McEliece_Level3;
-    else if (tray.type_str == "ms-level4")    tray.tray_type = TrayType::McEliece_Level4;
-    else if (tray.type_str == "ms-level5")    tray.tray_type = TrayType::McEliece_Level5;
-    // mlkem+mldsa group
-    else if (tray.type_str == "mk-level1")    tray.tray_type = TrayType::MlKem_Level1;
-    else if (tray.type_str == "mk-level2")    tray.tray_type = TrayType::MlKem_Level2;
-    else if (tray.type_str == "mk-level3")    tray.tray_type = TrayType::MlKem_Level3;
-    else if (tray.type_str == "mk-level4")    tray.tray_type = TrayType::MlKem_Level4;
-    // frodokem+falcon group
-    else if (tray.type_str == "ff-level1")    tray.tray_type = TrayType::FrodoFalcon_Level1;
-    else if (tray.type_str == "ff-level2")    tray.tray_type = TrayType::FrodoFalcon_Level2;
-    else if (tray.type_str == "ff-level3")    tray.tray_type = TrayType::FrodoFalcon_Level3;
-    else if (tray.type_str == "ff-level4")    tray.tray_type = TrayType::FrodoFalcon_Level4;
-    else throw std::runtime_error("YAML tray: unknown profile '" + tray.type_str + "'");
+    tray.tray_type = tray_type_from_str(tray.type_str);
 
     YAML::Node tray_seq = doc["slots"];
     if (!tray_seq || !tray_seq.IsSequence())

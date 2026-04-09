@@ -94,6 +94,8 @@ Tray load_tray_yaml(const std::string& path) {
     tray.created       = node["created"]       ? node["created"].as<std::string>() : "";
     tray.expires       = node["expires"]       ? node["expires"].as<std::string>() : "";
 
+    tray.tray_type = tray_type_from_str(tray.type_str);
+
     if (node["slots"]) {
         for (const auto& s : node["slots"]) {
             Slot slot;

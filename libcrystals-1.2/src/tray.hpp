@@ -25,7 +25,7 @@ struct Tray {
     std::string alias;
     TrayType tray_type;
     std::string profile_group;  // one of the defined groups above
-    std::string type_str;       // must be "tray", overridden in SecureTray to "secure-tray"
+    std::string type_str;       // profile string, e.g. "level2-25519", "ms-level2"
     std::string id;             // UUID v8
     bool is_public = false;
     std::vector<Slot> slots;
@@ -57,3 +57,7 @@ Tray make_public_tray(const Tray& src);
 
 // Returns true if tray.id matches the UUID derived from its public keys.
 bool validate_tray_uuid(const Tray& tray);
+
+// Map a profile string (e.g. "level3", "ms-level2") to its TrayType.
+// Throws std::runtime_error on unknown profile.
+TrayType tray_type_from_str(const std::string& s);
