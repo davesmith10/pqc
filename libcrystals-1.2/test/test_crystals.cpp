@@ -258,10 +258,10 @@ static void test_ec_sig() {
     }
 }
 
-// ── Section 8: OBIWAN armor ───────────────────────────────────────────────────
+// ── Section 8: ZORRO armor ────────────────────────────────────────────────────
 
 static void test_obiwan_armor() {
-    std::printf("=== Section 8: OBIWAN armor ===\n");
+    std::printf("=== Section 8: ZORRO armor ===\n");
 
     WireHeader hdr;
     hdr.kdf    = KDFAlg::SHAKE256;
@@ -272,8 +272,8 @@ static void test_obiwan_armor() {
     std::vector<uint8_t> payload = {0x11, 0x22, 0x33, 0x44, 0x55};
 
     std::string armored = armor_pack(hdr, payload);
-    CHECK(armored.find("-----BEGIN OBIWAN ENCRYPTED FILE-----") != std::string::npos);
-    CHECK(armored.find("-----END OBIWAN ENCRYPTED FILE-----") != std::string::npos);
+    CHECK(armored.find("-----BEGIN ZORRO ENCRYPTED FILE-----") != std::string::npos);
+    CHECK(armored.find("-----END ZORRO ENCRYPTED FILE-----") != std::string::npos);
 
     std::vector<uint8_t> payload_out;
     WireHeader hdr2 = armor_unpack(armored, payload_out);
@@ -375,7 +375,7 @@ static void test_pw_wire_format() {
 
         // Armor/dearmor
         auto armored = armor_pw(wire);
-        CHECK(armored.find("-----BEGIN OBIWAN PW ENCRYPTED FILE-----") != std::string::npos);
+        CHECK(armored.find("-----BEGIN ZORRO PW ENCRYPTED FILE-----") != std::string::npos);
         auto wire2 = dearmor_pw(armored);
         CHECK(wire2 == wire);
 
