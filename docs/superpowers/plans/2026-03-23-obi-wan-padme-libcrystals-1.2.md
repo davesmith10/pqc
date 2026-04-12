@@ -947,6 +947,6 @@ Checklist:
 
 4. **mceliece+slhdsa trays**: NOT added to penelope's PROFILES in this plan. McEliece public keys are 260KB+ which would produce impractically large PNGs. This is out of scope.
 
-4. **obiwan_level_str() in penelope**: The ZORRO wire format doesn't carry enough information to distinguish mk-level2 from crystals level2 (same CT sizes for ML-KEM-512 vs Kyber512). The pngify display will show "level2" for mk-level2 ZORRO files. This is a cosmetic limitation — pngify is a visualization tool and correctness of the label is not critical.
+4. **zorro_level_str() in penelope**: The ZORRO wire format doesn't carry enough information to distinguish mk-level2 from crystals level2 (same CT sizes for ML-KEM-512 vs Kyber512). The pngify display will show "level2" for mk-level2 ZORRO files. This is a cosmetic limitation — pngify is a visualization tool and correctness of the label is not critical.
 
 5. **level1 trays**: mk-level1 and ff-level1 (PQ-only, no classical) are not tested for sign/verify since zorro requires all 4 slots for HYKE. They will work for encrypt/decrypt if they have a PQ KEM slot (but zorro's encrypt requires both classical AND PQ KEM, so level1 PQ-only won't encrypt either). These trays are useful for key backup/archival but not for zorro encrypt/sign.

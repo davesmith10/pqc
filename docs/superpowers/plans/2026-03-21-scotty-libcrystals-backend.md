@@ -772,13 +772,13 @@ Expected: clean build, same binary. (CMake will just relink since no .cpp change
 - [ ] **Step 1: All 6 crystals profiles**
 
 ```bash
-SCOTTY=hybrid/build/hybrid
-$SCOTTY keygen --alias alice --profile level2-25519
-$SCOTTY keygen --alias alice --profile level0
-$SCOTTY keygen --alias alice --profile level1
-$SCOTTY keygen --alias alice --profile level2
-$SCOTTY keygen --alias alice --profile level3
-$SCOTTY keygen --alias alice --profile level5
+HYBRID=hybrid/build/hybrid
+$HYBRID keygen --alias alice --profile level2-25519
+$HYBRID keygen --alias alice --profile level0
+$HYBRID keygen --alias alice --profile level1
+$HYBRID keygen --alias alice --profile level2
+$HYBRID keygen --alias alice --profile level3
+$HYBRID keygen --alias alice --profile level5
 ```
 
 Expected: each produces valid YAML to stdout. level0 and level1 have 2 slots; level2-25519, level2 have 4 slots; level3 has 4 slots; level5 has 4 slots.
@@ -786,11 +786,11 @@ Expected: each produces valid YAML to stdout. level0 and level1 have 2 slots; le
 - [ ] **Step 2: All 5 mceliece+slhdsa profiles**
 
 ```bash
-$SCOTTY keygen --group mceliece+slhdsa --alias alice --profile level1
-$SCOTTY keygen --group mceliece+slhdsa --alias alice --profile level2
-$SCOTTY keygen --group mceliece+slhdsa --alias alice --profile level3
-$SCOTTY keygen --group mceliece+slhdsa --alias alice --profile level4
-$SCOTTY keygen --group mceliece+slhdsa --alias alice --profile level5
+$HYBRID keygen --group mceliece+slhdsa --alias alice --profile level1
+$HYBRID keygen --group mceliece+slhdsa --alias alice --profile level2
+$HYBRID keygen --group mceliece+slhdsa --alias alice --profile level3
+$HYBRID keygen --group mceliece+slhdsa --alias alice --profile level4
+$HYBRID keygen --group mceliece+slhdsa --alias alice --profile level5
 ```
 
 Expected: valid YAML. level1 has 2 slots; level2–5 have 4 slots.
@@ -798,19 +798,19 @@ Expected: valid YAML. level1 has 2 slots; level2–5 have 4 slots.
 - [ ] **Step 3: --out and --public**
 
 ```bash
-$SCOTTY keygen --alias alice --out /tmp/alice.tray
+$HYBRID keygen --alias alice --out /tmp/alice.tray
 cat /tmp/alice.tray   # confirm YAML on disk
-$SCOTTY keygen --alias alice --public --out /tmp/alice2.tray
+$HYBRID keygen --alias alice --public --out /tmp/alice2.tray
 ls /tmp/alice2.tray /tmp/alice2.pub.tray   # both files must exist
 ```
 
 - [ ] **Step 4: protect / unprotect full roundtrip**
 
 ```bash
-$SCOTTY keygen --alias alice --out /tmp/alice.tray
+$HYBRID keygen --alias alice --out /tmp/alice.tray
 echo "testpass123" > /tmp/pw.txt
-$SCOTTY protect   --in /tmp/alice.tray     --out /tmp/alice.sec.tray  --password-file /tmp/pw.txt
-$SCOTTY unprotect --in /tmp/alice.sec.tray --out /tmp/alice.plain.tray --password-file /tmp/pw.txt
+$HYBRID protect   --in /tmp/alice.tray     --out /tmp/alice.sec.tray  --password-file /tmp/pw.txt
+$HYBRID unprotect --in /tmp/alice.sec.tray --out /tmp/alice.plain.tray --password-file /tmp/pw.txt
 diff /tmp/alice.tray /tmp/alice.plain.tray
 ```
 
@@ -819,10 +819,10 @@ Expected: `diff` exits 0.
 - [ ] **Step 5: Error cases**
 
 ```bash
-$SCOTTY keygen; echo "exit: $?"                                         # → exit 1
-$SCOTTY keygen --alias x --group bad; echo "exit: $?"                   # → exit 1
+$HYBRID keygen; echo "exit: $?"                                         # → exit 1
+$HYBRID keygen --alias x --group bad; echo "exit: $?"                   # → exit 1
 echo "wrong" > /tmp/wrong.txt
-$SCOTTY unprotect --in /tmp/alice.sec.tray --out /tmp/x.tray \
+$HYBRID unprotect --in /tmp/alice.sec.tray --out /tmp/x.tray \
         --password-file /tmp/wrong.txt; echo "exit: $?"                 # → exit 2
 ```
 
