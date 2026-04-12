@@ -296,7 +296,7 @@ static std::vector<uint8_t> read_block(const unsigned char* pixels, unsigned img
             throw std::runtime_error("pixel at ("
                 + std::to_string(x_off + col) + ","
                 + std::to_string(y_off + row)
-                + ") is not in the rainbow palette — not a padme PNG?");
+                + ") is not in the rainbow palette — not a penelope PNG?");
         out.push_back(it->second);
     }
     return out;
@@ -521,17 +521,17 @@ static bool write_tray_file(const Tray& tray, const std::string& path, const cha
 
 // ── pngify / pngout image constants ──────────────────────────────────────────
 
-static const unsigned OBIWAN_IMG_W  = 500;
-static const unsigned OBIWAN_MARGIN = 12;
-static const unsigned OBIWAN_DATA_W = OBIWAN_IMG_W - 2 * OBIWAN_MARGIN;  // 476
+static const unsigned ZORRO_IMG_W  = 500;
+static const unsigned ZORRO_MARGIN = 12;
+static const unsigned ZORRO_DATA_W = ZORRO_IMG_W - 2 * ZORRO_MARGIN;  // 476
 
 // ── pngify / pngout helpers ───────────────────────────────────────────────────
 
-// Returns "obiwan", "hyke", or "pwenc" from the BEGIN armor line.
+// Returns "zorro", "hyke", or "pwenc" from the BEGIN armor line.
 static std::string detect_armor_format(const std::string& first_line) {
-    if (first_line.find("BEGIN OBIWAN PW ENCRYPTED") != std::string::npos) return "pwenc";
-    if (first_line.find("BEGIN HYKE")                != std::string::npos) return "hyke";
-    if (first_line.find("BEGIN OBIWAN ENCRYPTED")    != std::string::npos) return "obiwan";
+    if (first_line.find("BEGIN ZORRO PW ENCRYPTED") != std::string::npos) return "pwenc";
+    if (first_line.find("BEGIN HYKE")               != std::string::npos) return "hyke";
+    if (first_line.find("BEGIN ZORRO ENCRYPTED")    != std::string::npos) return "zorro";
     return "";
 }
 
@@ -552,7 +552,7 @@ static std::vector<uint8_t> dearmor_bytes(const std::string& text, const std::st
     return base64_decode(b64);
 }
 
-// OBIWAN wire: "OBIWAN01"(8) + kdf(1) + cipher(1) + ct_cl_len u32be(4) + ct_cl + ct_pq_len u32be(4) + ...
+// ZORRO wire: "ZORRO001"(8) + kdf(1) + cipher(1) + ct_cl_len u32be(4) + ct_cl + ct_pq_len u32be(4) + ...
 static std::string obiwan_level_str(const std::vector<uint8_t>& wire) {
     if (wire.size() < 14) return "unknown";
     uint32_t ct_cl_len = (uint32_t(wire[10]) << 24) | (uint32_t(wire[11]) << 16)
@@ -616,8 +616,8 @@ static std::string format_uuid_bytes(const uint8_t* uuid) {
 // Compute y_data from format: 1 header line (obiwan/pwenc) → 28; 2 header lines (hyke) → 38
 static unsigned pngify_y_data(const std::string& fmt) {
     if (fmt == "hyke")
-        return OBIWAN_MARGIN + LINE_SPACING + FONT_H + ENCAPS_GAP;  // 12+10+8+8 = 38
-    return OBIWAN_MARGIN + FONT_H + ENCAPS_GAP;                     // 12+8+8    = 28
+        return ZORRO_MARGIN + LINE_SPACING + FONT_H + ENCAPS_GAP;  // 12+10+8+8 = 38
+    return ZORRO_MARGIN + FONT_H + ENCAPS_GAP;                     // 12+8+8    = 28
 }
 
 // Make crystals-obiwan iTXt text
@@ -628,10 +628,10 @@ static std::string make_obiwan_text(const std::string& fmt, size_t data_len) {
     return ss.str();
 }
 
-struct OBIWANMeta { std::string format; size_t data_len = 0; };
+struct ZorroMeta { std::string format; size_t data_len = 0; };
 
-static OBIWANMeta parse_obiwan_meta(const std::string& text) {
-    OBIWANMeta m;
+static ZorroMeta parse_zorro_meta(const std::string& text) {
+    ZorroMeta m;
     std::istringstream ss(text);
     std::string line;
     while (std::getline(ss, line)) {
@@ -654,11 +654,11 @@ static std::string rearmor_bytes(const std::vector<uint8_t>& data, const std::st
         begin_marker = "-----BEGIN HYKE SIGNED FILE-----";
         end_marker   = "-----END HYKE SIGNED FILE-----";
     } else if (fmt == "pwenc") {
-        begin_marker = "-----BEGIN OBIWAN PW ENCRYPTED FILE-----";
-        end_marker   = "-----END OBIWAN PW ENCRYPTED FILE-----";
+        begin_marker = "-----BEGIN ZORRO PW ENCRYPTED FILE-----";
+        end_marker   = "-----END ZORRO PW ENCRYPTED FILE-----";
     } else {
-        begin_marker = "-----BEGIN OBIWAN ENCRYPTED FILE-----";
-        end_marker   = "-----END OBIWAN ENCRYPTED FILE-----";
+        begin_marker = "-----BEGIN ZORRO ENCRYPTED FILE-----";
+        end_marker   = "-----END ZORRO ENCRYPTED FILE-----";
     }
 
     std::string b64 = base64_encode(data.data(), data.size());
@@ -676,14 +676,14 @@ static ImageResult build_pngify_image(const std::string& fmt,
                                        const std::string& level_str,
                                        const std::string& uuid_str,
                                        const std::vector<uint8_t>& data) {
-    const unsigned img_w  = OBIWAN_IMG_W;
+    const unsigned img_w  = ZORRO_IMG_W;
     const unsigned y_data = pngify_y_data(fmt);
-    unsigned data_rows = (unsigned)((data.size() + OBIWAN_DATA_W - 1) / OBIWAN_DATA_W);
+    unsigned data_rows = (unsigned)((data.size() + ZORRO_DATA_W - 1) / ZORRO_DATA_W);
     if (data_rows == 0) data_rows = 1;
 
     unsigned y_cpy1 = y_data + data_rows + ENCAPS_GAP;
     unsigned y_cpy2 = y_cpy1 + LINE_SPACING;
-    unsigned img_h  = y_cpy2 + FONT_H + OBIWAN_MARGIN;
+    unsigned img_h  = y_cpy2 + FONT_H + ZORRO_MARGIN;
 
     std::vector<uint8_t> pixels(img_w * img_h * 4, 0xFF);
 
@@ -692,28 +692,28 @@ static ImageResult build_pngify_image(const std::string& fmt,
 
     // Header text
     std::string title;
-    if (fmt == "hyke")    title = "OBIWAN HYKE SIGNED FILE - "    + level_str;
-    else if (fmt == "pwenc") title = "OBIWAN PW ENCRYPTED FILE - " + level_str;
-    else                  title = "OBIWAN ENCRYPTED FILE - "       + level_str;
+    if (fmt == "hyke")    title = "ZORRO HYKE SIGNED FILE - "    + level_str;
+    else if (fmt == "pwenc") title = "ZORRO PW ENCRYPTED FILE - " + level_str;
+    else                  title = "ZORRO ENCRYPTED FILE - "       + level_str;
 
-    draw_text(pixels, img_w, OBIWAN_MARGIN, OBIWAN_MARGIN, title, fg_dark, bg_white);
+    draw_text(pixels, img_w, ZORRO_MARGIN, ZORRO_MARGIN, title, fg_dark, bg_white);
 
     if (fmt == "hyke" && !uuid_str.empty()) {
-        unsigned y_uuid = OBIWAN_MARGIN + LINE_SPACING;
-        draw_text(pixels, img_w, OBIWAN_MARGIN, y_uuid, uuid_str, fg_dark, bg_white);
+        unsigned y_uuid = ZORRO_MARGIN + LINE_SPACING;
+        draw_text(pixels, img_w, ZORRO_MARGIN, y_uuid, uuid_str, fg_dark, bg_white);
     }
 
     // Data region
-    fill_block(pixels, img_w, data, data_rows, OBIWAN_MARGIN, y_data, OBIWAN_DATA_W);
+    fill_block(pixels, img_w, data, data_rows, ZORRO_MARGIN, y_data, ZORRO_DATA_W);
 
     // Copyright footer (centered over the 476px data region)
     const std::string cpy1 = "\xC2\xA9 2026 David R. Smith";
     const std::string cpy2 = "All Rights Reserved";
-    unsigned content_w = OBIWAN_DATA_W;
+    unsigned content_w = ZORRO_DATA_W;
     unsigned cpy1_w = text_pixel_width(cpy1);
     unsigned cpy2_w = text_pixel_width(cpy2);
-    unsigned x_cpy1 = OBIWAN_MARGIN + (content_w - cpy1_w) / 2;
-    unsigned x_cpy2 = OBIWAN_MARGIN + (content_w - cpy2_w) / 2;
+    unsigned x_cpy1 = ZORRO_MARGIN + (content_w - cpy1_w) / 2;
+    unsigned x_cpy2 = ZORRO_MARGIN + (content_w - cpy2_w) / 2;
     draw_text(pixels, img_w, x_cpy1, y_cpy1, cpy1, fg_dark, bg_white);
     draw_text(pixels, img_w, x_cpy2, y_cpy2, cpy2, fg_dark, bg_white);
 
@@ -808,7 +808,7 @@ static int cmd_pngify(int argc, char* argv[]) {
 
     // 4. Extract level and UUID
     std::string level_str, uuid_str;
-    if      (fmt == "obiwan") level_str = obiwan_level_str(data);
+    if      (fmt == "zorro") level_str = obiwan_level_str(data);
     else if (fmt == "hyke")   { level_str = hyke_level_str(data); }
     else                      level_str = pwenc_level_str(data);
 
@@ -887,8 +887,8 @@ static int cmd_pngout(int argc, char* argv[]) {
     }
 
     // 3. Parse metadata
-    OBIWANMeta meta;
-    try { meta = parse_obiwan_meta(obiwan_text); }
+    ZorroMeta meta;
+    try { meta = parse_zorro_meta(obiwan_text); }
     catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n"; return 2;
     }
@@ -901,7 +901,7 @@ static int cmd_pngout(int argc, char* argv[]) {
     std::vector<uint8_t> data;
     try {
         data = read_block(pixels.data(), img_w, rlut,
-                          OBIWAN_MARGIN, y_data, meta.data_len, OBIWAN_DATA_W);
+                          ZORRO_MARGIN, y_data, meta.data_len, ZORRO_DATA_W);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n"; return 2;
     }
@@ -935,7 +935,7 @@ static void print_usage(const char* prog) {
         "\n"
         "  tray-encaps  Render + password-encrypt private keys into a PNG\n"
         "  tray-decaps  Decrypt and recover a tray from an encaps PNG\n"
-        "  pngify       Convert an obi-wan armored file (OBIWAN/HYKE/PWENC) into a PNG\n"
+        "  pngify       Convert a zorro armored file (ZORRO/HYKE/PWENC) into a PNG\n"
         "  pngout       Recover an armored file from a pngify PNG\n"
         "\n"
         "tray-encaps options:\n"
@@ -949,7 +949,7 @@ static void print_usage(const char* prog) {
         "  --pwfile   <file>      Read password from file (prompts if omitted)\n"
         "\n"
         "pngify options:\n"
-        "  --in  <file>           Input armored file (OBIWAN encrypted, HYKE signed, or PWENC)\n"
+        "  --in  <file>           Input armored file (ZORRO encrypted, HYKE signed, or PWENC)\n"
         "  --out <file.png>       Output PNG\n"
         "\n"
         "pngout options:\n"
@@ -1120,7 +1120,7 @@ static int cmd_tray_decaps(int argc, char* argv[]) {
     lodepng_state_cleanup(&state);
 
     if (meta_text.empty()) {
-        std::cerr << "Error: no crystals-tray iTXt chunk — not a padme PNG\n";
+        std::cerr << "Error: no crystals-tray iTXt chunk — not a penelope PNG\n";
         return 2;
     }
     if (encaps_text.empty()) {

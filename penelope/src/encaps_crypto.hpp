@@ -1,6 +1,6 @@
 #pragma once
-// Scrypt KDF wrapper for padme encaps/decaps.
-// AES-256-GCM helpers re-use the same symmetric.hpp used by obi-wan.
+// Scrypt KDF wrapper for penelope encaps/decaps.
+// AES-256-GCM helpers re-use the same symmetric.hpp used by zorro.
 
 #include <crystals/crystals.hpp>    // aes256gcm_encrypt_aad / _decrypt_aad
 

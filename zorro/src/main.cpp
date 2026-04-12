@@ -32,7 +32,7 @@ static void print_usage(const char* prog) {
         "  --data   Token payload string (gentok only, 1–256 bytes)\n"
         "  --ttl    Token lifetime in seconds (gentok only, default 86400)\n"
         "\n"
-        "  encrypt:   reads <target-file>, writes OBIWAN armored ciphertext to stdout\n"
+        "  encrypt:   reads <target-file>, writes ZORRO armored ciphertext to stdout\n"
         "  decrypt:   reads armored <target-file>, writes plaintext to stdout\n"
         "  encrypt+sign: encrypt-and-sign using all 4 tray slots; writes HYKE armor to stdout\n"
         "  verify+decrypt: verify both signatures and decrypt HYKE file; writes plaintext to stdout\n"
