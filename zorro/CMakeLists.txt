@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(obi-wan LANGUAGES C CXX)
+project(zorro LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,13 +19,13 @@ endif()
 get_filename_component(_tbb_libdir "${_tbb_loc}" DIRECTORY)
 set(CMAKE_BUILD_RPATH "${_tbb_libdir}" /usr/local/lib)
 
-add_executable(obi-wan src/main.cpp)
+add_executable(zorro src/main.cpp)
 
-target_link_libraries(obi-wan PRIVATE
+target_link_libraries(zorro PRIVATE
     Crystals::crystals
     OpenSSL::Crypto
 )
 
-target_compile_options(obi-wan PRIVATE -O2 -Wall -Wextra)
+target_compile_options(zorro PRIVATE -O2 -Wall -Wextra)
 
-install(TARGETS obi-wan DESTINATION bin)
+install(TARGETS zorro DESTINATION bin)

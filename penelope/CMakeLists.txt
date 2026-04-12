@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(padme LANGUAGES C CXX)
+project(penelope LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,22 +16,22 @@ get_filename_component(_tbb_libdir "${_tbb_loc}" DIRECTORY)
 set(CMAKE_BUILD_RPATH "${_tbb_libdir}" "/usr/local/lib")
 
 # ── Executable ────────────────────────────────────────────────────────────────
-add_executable(padme
+add_executable(penelope
     src/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/lodepng.cpp
 )
 
-target_include_directories(padme PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}   # lodepng.h (at padme root)
+target_include_directories(penelope PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}   # lodepng.h (at penelope root)
     src/                          # encaps_crypto.hpp, bitmap_font.hpp
 )
 
-target_compile_options(padme PRIVATE -O2 -Wall -Wextra)
+target_compile_options(penelope PRIVATE -O2 -Wall -Wextra)
 
-target_link_libraries(padme PRIVATE
+target_link_libraries(penelope PRIVATE
     Crystals::crystals
     OpenSSL::Crypto
 )
 
 # ── Install ───────────────────────────────────────────────────────────────────
-install(TARGETS padme DESTINATION bin)
+install(TARGETS penelope DESTINATION bin)

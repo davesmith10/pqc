@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(scotty LANGUAGES C CXX)
+project(hybrid LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,13 +19,13 @@ endif()
 get_filename_component(_tbb_libdir "${_tbb_loc}" DIRECTORY)
 set(CMAKE_BUILD_RPATH "${_tbb_libdir}" /usr/local/lib)
 
-add_executable(scotty src/main.cpp)
+add_executable(hybrid src/main.cpp)
 
-target_link_libraries(scotty PRIVATE
+target_link_libraries(hybrid PRIVATE
     Crystals::crystals
     OpenSSL::Crypto
 )
 
-target_compile_options(scotty PRIVATE -O2 -Wall -Wextra)
+target_compile_options(hybrid PRIVATE -O2 -Wall -Wextra)
 
-install(TARGETS scotty DESTINATION bin)
+install(TARGETS hybrid DESTINATION bin)
