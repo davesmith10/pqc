@@ -253,13 +253,13 @@ std::string emit_secure_tray_yaml(const SecureTray& st);    // @api-stable v1.0
 SecureTray protect_tray  (const Tray&       tray,   const char* passwd, size_t passwd_len); // @api-stable v1.0
 Tray       unprotect_tray(const SecureTray& st,     const char* passwd, size_t passwd_len); // @api-stable v1.0
 
-// ── OBIWAN wire format ────────────────────────────────────────────────────────
+// ── ZORRO wire format ─────────────────────────────────────────────────────────
 
 enum class KDFAlg   : uint8_t { SHAKE256 = 0, KMAC256 = 1 };         // @api-stable v1.0
 enum class CipherAlg: uint8_t { AES256GCM = 0, ChaCha20Poly1305 = 1 }; // @api-stable v1.0
 
-static constexpr char kArmorBegin[] = "-----BEGIN OBIWAN ENCRYPTED FILE-----";
-static constexpr char kArmorEnd[]   = "-----END OBIWAN ENCRYPTED FILE-----";
+static constexpr char kArmorBegin[] = "-----BEGIN ZORRO ENCRYPTED FILE-----";
+static constexpr char kArmorEnd[]   = "-----END ZORRO ENCRYPTED FILE-----";
 
 struct WireHeader {                    // @api-stable v1.0
     KDFAlg    kdf;
@@ -549,8 +549,8 @@ struct PwBundle {                      // @api-stable v1.0
     std::vector<uint8_t> data_nonce_tag_ct;
 };
 
-static constexpr char kPwArmorBegin[] = "-----BEGIN OBIWAN PW ENCRYPTED FILE-----";
-static constexpr char kPwArmorEnd[]   = "-----END OBIWAN PW ENCRYPTED FILE-----";
+static constexpr char kPwArmorBegin[] = "-----BEGIN ZORRO PW ENCRYPTED FILE-----";
+static constexpr char kPwArmorEnd[]   = "-----END ZORRO PW ENCRYPTED FILE-----";
 
 static inline void pw_push_u16be(std::vector<uint8_t>& buf, uint16_t v) {
     buf.push_back((v >> 8) & 0xFF);
@@ -1173,8 +1173,8 @@ inline std::array<uint8_t, 32> derive_key_hyke(              // @api-stable v1.0
     const std::vector<uint8_t>& ct_pq,
     const uint8_t salt[32])
 {
-    static const char* kCustom = "obi-wan-hybrid-sig-v1";
-    static const size_t kCustomLen = 21;
+    static const char* kCustom = "zorro-hybrid-sig-v1";
+    static const size_t kCustomLen = 19;
 
     std::vector<uint8_t> msg;
     msg.reserve(ss_pq.size() + ct_classical.size() + ct_pq.size() + 32);
@@ -1196,8 +1196,8 @@ inline std::vector<uint8_t> compute_hyke_ctx(                // @api-stable v1.0
     const std::vector<uint8_t>& pk_classical,
     const std::vector<uint8_t>& pk_pq)
 {
-    static const char* kDomain    = "obi-wan-hybrid-sig-v1";
-    static const size_t kDomainLen = 21;
+    static const char* kDomain    = "zorro-hybrid-sig-v1";
+    static const size_t kDomainLen = 19;
 
     std::vector<uint8_t> msg;
     msg.reserve(pk_pq.size() + kDomainLen);
