@@ -1,23 +1,23 @@
-# obi-wan
+# zorro
 
 Hybrid post-quantum + classical file encryption, signing, and token generation.
-Operates on **trays** produced by [scotty](../scotty/), which bundle a classical key
+Operates on **trays** produced by [hybrid](../hybrid/), which bundle a classical key
 pair (X25519/P-curve ECDH + Ed25519/ECDSA) with a post-quantum pair (Kyber KEM +
 Dilithium signature, or McEliece KEM + SLH-DSA signature) at the chosen security level.
 
 ## Commands
 
 ```
-obi-wan encrypt        --tray <file> [--kdf SHAKE|KMAC] [--cipher AES-256-GCM|ChaCha20] <target-file>
-obi-wan decrypt        --tray <file> <target-file>
-obi-wan encrypt+sign   --tray <file> <target-file>
-obi-wan verify+decrypt --tray <file> <target-file>
-obi-wan sign           --tray <file> --in-file <file>
-obi-wan verify         --tray <file> --in-file <file> --in-sig <file>
-obi-wan gentok         --tray <file> --data <string> [--ttl <seconds>]
-obi-wan valtok         --tray <file> [token-file]
-obi-wan pwencrypt      [--level 512|768|1024] [--scrypt-n 20] [--pwfile <file>] <infile> <outfile>
-obi-wan pwdecrypt      [--pwfile <file>] <infile> <outfile>
+zorro encrypt        --tray <file> [--kdf SHAKE|KMAC] [--cipher AES-256-GCM|ChaCha20] <target-file>
+zorro decrypt        --tray <file> <target-file>
+zorro encrypt+sign   --tray <file> <target-file>
+zorro verify+decrypt --tray <file> <target-file>
+zorro sign           --tray <file> --in-file <file>
+zorro verify         --tray <file> --in-file <file> --in-sig <file>
+zorro gentok         --tray <file> --data <string> [--ttl <seconds>]
+zorro valtok         --tray <file> [token-file]
+zorro pwencrypt      [--level 512|768|1024] [--scrypt-n 20] [--pwfile <file>] <infile> <outfile>
+zorro pwdecrypt      [--pwfile <file>] <infile> <outfile>
 ```
 
 ### encrypt / decrypt
@@ -26,7 +26,7 @@ Encrypts a file using both the classical KEM slot and the PQ KEM slot from the t
 The two shared secrets are combined via a hybrid KDF; the result encrypts the payload with the 
 chosen symmetric cipher.
 
-Output is written to stdout as a PEM-armored `OBIWAN ENCRYPTED FILE`.
+Output is written to stdout as a PEM-armored `ZORRO ENCRYPTED FILE`.
 
 **Options:**
 - `--kdf SHAKE` (default) — SHAKE-256 over length-prefixed concatenation of both shared secrets
@@ -42,7 +42,7 @@ Encrypts and signs a file using all four slots in the tray: both KEM slots prote
 symmetric key (same as `encrypt`), and both signature slots (Ed25519/ECDSA + Dilithium
 or SLH-DSA) sign the header and encrypted payload.
 
-Output is written to stdout as a PEM-armored `HYKE SIGNED FILE`.
+Output is written to stdout as a PEM-armored `ZORRO SIGNED FILE`.
 
 `verify+decrypt` checks both signatures before decrypting. Any tampering causes exit code 2.
 
@@ -55,8 +55,8 @@ Signs an arbitrary file without encrypting it. Both the classical signature slot
 same message digest, producing a single composite signature.
 
 ```
-obi-wan sign   --tray <file> --in-file <file>
-obi-wan verify --tray <file> --in-file <file> --in-sig <file>
+zorro sign   --tray <file> --in-file <file>
+zorro verify --tray <file> --in-file <file> --in-sig <file>
 ```
 
 **Algorithm:** The signed message is `M' = tray_uuid(16 bytes) || SHA-256(file_bytes)`.
@@ -102,11 +102,11 @@ Issues and validates compact signed tokens bound to a tray identity.
 
 ```bash
 # Generate a token (writes base64 to stdout)
-obi-wan gentok --tray alice.tray --data "user=alice" [--ttl 3600]
+zorro gentok --tray alice.tray --data "user=alice" [--ttl 3600]
 
 # Validate a token (reads from file or stdin)
-obi-wan valtok --tray alice.tray token.b64
-echo "<base64>" | obi-wan valtok --tray alice.tray
+zorro valtok --tray alice.tray token.b64
+echo "<base64>" | zorro valtok --tray alice.tray
 ```
 
 - `--data` — 1–256 byte payload string embedded in the token
@@ -121,19 +121,19 @@ derives a wrap key from the password via scrypt, and encrypts the file with two
 nested AES-256-GCM layers.
 
 ```bash
-obi-wan pwencrypt [--level 512|768|1024] [--scrypt-n 20] [--pwfile <file>] <infile> <outfile>
-obi-wan pwdecrypt [--pwfile <file>] <infile> <outfile>
+zorro pwencrypt [--level 512|768|1024] [--scrypt-n 20] [--pwfile <file>] <infile> <outfile>
+zorro pwdecrypt [--pwfile <file>] <infile> <outfile>
 ```
 
 - `--level` — Kyber security level for the ephemeral KEM (default 768)
 - `--scrypt-n` — log₂ of the scrypt N parameter (default 20 = 1 048 576 iterations; range 16–22)
 - `--pwfile` — read password from the first line of a file (prompts on the terminal if omitted; `pwencrypt` prompts twice for confirmation)
 
-Output is a PEM-armored `OBIWAN PW ENCRYPTED FILE`.
+Output is a PEM-armored `ZORRO PW ENCRYPTED FILE`.
 
 ## Tray Profiles
 
-Trays are created by [scotty](../scotty/) and passed via `--tray`.
+Trays are created by [hybrid](../hybrid/) and passed via `--tray`.
 
 ### crystals group (default)
 
@@ -162,18 +162,18 @@ Trays are created by [scotty](../scotty/) and passed via `--tray`.
 
 ## Wire Formats
 
-### OBIWAN (encrypt)
+### ZORRO (encrypt)
 
 ```
-"OBIWAN01" (8B) | kdf (1B) | cipher (1B)
+"ZORRO01" (8B) | kdf (1B) | cipher (1B)
 | ct_classical_len (4B BE) | ct_classical
 | ct_pq_len (4B BE)        | ct_pq
 | nonce (12B) | tag (16B)  | ciphertext
 ```
 
-Wrapped in `-----BEGIN/END OBIWAN ENCRYPTED FILE-----` PEM armor (base64, 64-char lines).
+Wrapped in `-----BEGIN/END ZORRO ENCRYPTED FILE-----` PEM armor (base64, 64-char lines).
 
-### HYKE (encrypt+sign)
+### ZORRO Signed (encrypt+sign)
 
 ```
 "HYKE" (4B) | version (2B) | tray_id (1B) | flags (1B)
@@ -191,7 +191,7 @@ SLH-DSA signatures are raw bytes via OpenSSL 3.5 (`EVP_DigestSign`). All field l
 are stored as 32-bit big-endian values, so the wire format accommodates McEliece
 ciphertexts (96–208 B) and SLH-DSA signatures (17–50 KB) without change.
 
-Wrapped in `-----BEGIN/END HYKE SIGNED FILE-----` PEM armor.
+Wrapped in `-----BEGIN/END ZORRO SIGNED FILE-----` PEM armor.
 
 ### Composite Sig (sign)
 
@@ -206,7 +206,7 @@ accommodate variable-length PQ signatures (e.g. Falcon via `oqs_sig`).
 ### PWENC (pwencrypt)
 
 ```
-"OBWE" (4B) | version (1B) | level (2B BE)
+"ZOWE" (4B) | version (1B) | level (2B BE)
 | salt (32B) | scrypt_n_log2 (1B) | scrypt_r (1B) | scrypt_p (1B)
 | pk | ct
 | wrap_nonce (12B) | wrap_tag (16B) | sk_enc
@@ -215,12 +215,12 @@ accommodate variable-length PQ signatures (e.g. Falcon via `oqs_sig`).
 
 The scrypt-derived wrap key decrypts `sk_enc` → ephemeral Kyber sk → decapsulate `ct` → data key → decrypt ciphertext.
 
-Wrapped in `-----BEGIN/END OBIWAN PW ENCRYPTED FILE-----` PEM armor.
+Wrapped in `-----BEGIN/END ZORRO PW ENCRYPTED FILE-----` PEM armor.
 
 ### Token (gentok)
 
 ```
-"obi-wan\0" (8B) | version (2B)
+"zorro\0\0\0" (8B) | version (2B)
 | TLV[0x01: data] | TLV[0x02: issued_at] | TLV[0x03: expires_at]
 | TLV[0x04: tray_uuid] | TLV[0x05: algorithm] | TLV[0x06: token_uuid]
 | sig_len (4B BE) | signature
@@ -233,9 +233,9 @@ Tokens are output as a single base64 line (no PEM armor).
 ## Build
 
 ```bash
-cmake -S pq/obi-wan -B pq/obi-wan/build
-cmake --build pq/obi-wan/build -j$(nproc)
-# Binary: pq/obi-wan/build/obi-wan
+cmake -S pq/zorro -B pq/zorro/build
+cmake --build pq/zorro/build -j$(nproc)
+# Binary: pq/zorro/build/zorro
 # Requires: libcrystals-1.1 installed to /usr/local
 #   sudo bash pq/libcrystals-1.1/install.sh
 ```
@@ -248,39 +248,39 @@ target — no `CMAKE_PREFIX_PATH` needed.
 
 ```bash
 # Generate a tray
-scotty keygen --alias alice --profile level2-25519 > alice.tray
+hybrid keygen --alias alice --profile level2-25519 > alice.tray
 
 # Encrypt / decrypt
-obi-wan encrypt --tray alice.tray plaintext.txt > message.armored
-obi-wan decrypt --tray alice.tray message.armored > recovered.txt
+zorro encrypt --tray alice.tray plaintext.txt > message.armored
+zorro decrypt --tray alice.tray message.armored > recovered.txt
 
 # Encrypt with KMAC + ChaCha20
-obi-wan encrypt --tray alice.tray --kdf KMAC --cipher ChaCha20 plaintext.txt > message.armored
+zorro encrypt --tray alice.tray --kdf KMAC --cipher ChaCha20 plaintext.txt > message.armored
 
-# Encrypt and sign / verify and decrypt (HYKE — all-in-one encrypt+auth)
-obi-wan encrypt+sign   --tray alice.tray document.pdf > document.hyke
-obi-wan verify+decrypt --tray alice.tray document.hyke > document_out.pdf
+# Encrypt and sign / verify and decrypt (ZORRO — all-in-one encrypt+auth)
+zorro encrypt+sign   --tray alice.tray document.pdf > document.zorro
+zorro verify+decrypt --tray alice.tray document.zorro > document_out.pdf
 
 # Pure hybrid digital signature (sign only — no encryption)
-obi-wan sign   --tray alice.tray --in-file document.pdf > document.sig.yaml
-obi-wan verify --tray alice.tray --in-file document.pdf --in-sig document.sig.yaml
+zorro sign   --tray alice.tray --in-file document.pdf > document.sig.yaml
+zorro verify --tray alice.tray --in-file document.pdf --in-sig document.sig.yaml
 
 # mceliece+slhdsa tray
-scotty keygen --group mceliece+slhdsa --profile level2 --alias bob --out bob.tray
-obi-wan encrypt        --tray bob.tray plaintext.txt > message.armored
-obi-wan decrypt        --tray bob.tray message.armored > recovered.txt
-obi-wan encrypt+sign   --tray bob.tray document.pdf > document.hyke
-obi-wan verify+decrypt --tray bob.tray document.hyke > document_out.pdf
-obi-wan sign           --tray bob.tray --in-file document.pdf > document.sig.yaml
-obi-wan verify         --tray bob.tray --in-file document.pdf --in-sig document.sig.yaml
+hybrid keygen --group mceliece+slhdsa --profile level2 --alias bob --out bob.tray
+zorro encrypt        --tray bob.tray plaintext.txt > message.armored
+zorro decrypt        --tray bob.tray message.armored > recovered.txt
+zorro encrypt+sign   --tray bob.tray document.pdf > document.zorro
+zorro verify+decrypt --tray bob.tray document.zorro > document_out.pdf
+zorro sign           --tray bob.tray --in-file document.pdf > document.sig.yaml
+zorro verify         --tray bob.tray --in-file document.pdf --in-sig document.sig.yaml
 
 # Password encryption (no tray needed)
-obi-wan pwencrypt secret.txt secret.pwenc          # prompts for password
-obi-wan pwdecrypt --pwfile pw.txt secret.pwenc secret_out.txt
+zorro pwencrypt secret.txt secret.pwenc          # prompts for password
+zorro pwdecrypt --pwfile pw.txt secret.pwenc secret_out.txt
 
 # Token generation and validation
-obi-wan gentok --tray alice.tray --data "user=alice" --ttl 3600 > token.b64
-obi-wan valtok --tray alice.tray token.b64
+zorro gentok --tray alice.tray --data "user=alice" --ttl 3600 > token.b64
+zorro valtok --tray alice.tray token.b64
 ```
 
 ## Exit Codes

@@ -1,9 +1,9 @@
-# padme — Tray Encapsulator
+# penelope — Tray Encapsulator
 
-`padme tray-encaps` renders a Crystals tray (produced by `scotty`) into a 256-pixel-wide annotated
+`penelope tray-encaps` renders a Crystals tray (produced by `hybrid`) into a 256-pixel-wide annotated
 PNG and encrypts the private key bytes with a password (scrypt + AES-256-GCM). The resulting
 PNG carries the public keys as plaintext rainbow pixels, the encrypted secret keys as
-ciphertext pixels, and all decryption metadata in an iTXt chunk. `padme tray-decaps` reverses the
+ciphertext pixels, and all decryption metadata in an iTXt chunk. `penelope tray-decaps` reverses the
 process, recovering the original tray from the password-protected PNG.
 
 ---
@@ -11,8 +11,8 @@ process, recovering the original tray from the password-protected PNG.
 ## Commands
 
 ```
-padme tray-encaps  --in-tray <file>     [--out-png <file.png>] [--pwfile <file>]
-padme tray-decaps  --in-png <file.png>  [--out-tray <file>]    [--pwfile <file>]
+penelope tray-encaps  --in-tray <file>     [--out-png <file.png>] [--pwfile <file>]
+penelope tray-decaps  --in-png <file.png>  [--out-tray <file>]    [--pwfile <file>]
 ```
 
 ---
@@ -32,11 +32,11 @@ UUID) and a copyright footer.
 
 ```bash
 # Interactive (prompts twice)
-padme tray-encaps --in-tray alice.tray --out-png alice_enc.png
+penelope tray-encaps --in-tray alice.tray --out-png alice_enc.png
 
 # From a password file
 echo "hunter2" > pw.txt
-padme tray-encaps --in-tray alice.tray --pwfile pw.txt --out-png alice_enc.png
+penelope tray-encaps --in-tray alice.tray --pwfile pw.txt --out-png alice_enc.png
 # Encaps: tray 'alice' → alice_enc.png (scrypt N=2^19, AES-256-GCM)
 ```
 
@@ -48,19 +48,19 @@ Decrypts the private keys from an encaps PNG and reconstructs the original tray.
 
 | Flag | Description |
 |------|-------------|
-| `--in-png <file.png>` | encaps PNG produced by `padme tray-encaps` |
+| `--in-png <file.png>` | encaps PNG produced by `penelope tray-encaps` |
 | `--out-tray <file>` | Output file (YAML format; default: YAML to stdout) |
 | `--pwfile <file>` | Read password from file. Prompts `password:` once if omitted. |
 
 ```bash
 # Recover to stdout (YAML)
-padme tray-decaps --in-png alice_enc.png
+penelope tray-decaps --in-png alice_enc.png
 
 # Recover to YAML file
-padme tray-decaps --in-png alice_enc.png --out-tray alice-recovered.yaml
+penelope tray-decaps --in-png alice_enc.png --out-tray alice-recovered.yaml
 
 # Wrong password → exit 2
-echo "wrong" | padme tray-decaps --in-png alice_enc.png --pwfile /dev/stdin
+echo "wrong" | penelope tray-decaps --in-png alice_enc.png --pwfile /dev/stdin
 # Error: decryption failed — wrong password or corrupted image
 ```
 
@@ -88,7 +88,7 @@ centered row of colored pixels between the key blocks and the footer. Decryption
 
 ```
 ┌─────────────────────────────────────────────────────────┐  ← 12px margin
-│  PADME Tray - <profile>                                 │  ← header line 1
+│  Penelope Tray - <profile>                              │  ← header line 1
 │  <uuid>                                                 │  ← header line 2
 │                                                         │  ← 8px gap
 │  [classical pk · 112px]  │  [classical sk (enc) · 112px]│  ← top section
@@ -144,13 +144,13 @@ and byte 255 from colliding at pure red (hue 360° = hue 0°).
 Requires: `cmake`, `g++`, `yaml-cpp`, `OpenSSL 3`, and BLAKE3 + TBB installed to `Crystals/local/`.
 
 ```bash
-cmake -S pq/padme -B pq/padme/build \
+cmake -S pq/penelope -B pq/penelope/build \
   -DCMAKE_PREFIX_PATH=/mnt/c/Users/daves/OneDrive/Desktop/Crystals/local
-cmake --build pq/padme/build -j$(nproc)
-# Binary: pq/padme/build/padme
+cmake --build pq/penelope/build -j$(nproc)
+# Binary: pq/penelope/build/penelope
 ```
 
-`padme` compiles lodepng directly from source (vendored in this directory) and pulls in
+`penelope` compiles lodepng directly from source (vendored in this directory) and pulls in
 tray I/O code from `pq/libcrystals/src/` — no separate library install step needed.
 
 ---
