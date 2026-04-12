@@ -2,13 +2,13 @@
 
 **Date:** 2026-03-24
 **Status:** Approved
-**Scope:** `@pqc/obi-wan` CLI only. No changes to `libcrystals-1.2` — all required primitives already present in the installed library.
+**Scope:** `@pqc/zorro` CLI only. No changes to `libcrystals-1.2` — all required primitives already present in the installed library.
 
 ---
 
 ## Overview
 
-Add a pure hybrid digital signature capability to `obi-wan`: a `sign` command that signs an
+Add a pure hybrid digital signature capability to `zorro`: a `sign` command that signs an
 arbitrary document using both the classical and PQ signature keys in a tray, and a `verify`
 command that checks the resulting composite signature. The existing HYKE sign+encrypt and
 verify+decrypt operations are renamed to `encrypt+sign` and `verify+decrypt` respectively to
@@ -25,7 +25,7 @@ free up the `sign` and `verify` names.
 | *(new)* | `sign` | Pure hybrid digital signature (no encryption) |
 | *(new)* | `verify` | Pure hybrid signature verification (no decryption) |
 
-Internal C++ function renames in `obi-wan/src/main.cpp`:
+Internal C++ function renames in `zorro/src/main.cpp`:
 - `cmd_sign` → `cmd_encrypt_sign`
 - `cmd_verify` → `cmd_verify_decrypt`
 - New: `cmd_pure_sign`, `cmd_pure_verify`
@@ -83,7 +83,7 @@ The composite is base64-encoded for embedding in the YAML output.
 ### CLI
 
 ```
-obi-wan sign --tray <path> --in-file <path>
+zorro sign --tray <path> --in-file <path>
 ```
 
 ### Steps
@@ -133,7 +133,7 @@ trackable identity.
 ### CLI
 
 ```
-obi-wan verify --tray <path> --in-file <path> --in-sig <path>
+zorro verify --tray <path> --in-file <path> --in-sig <path>
 ```
 
 ### Steps
@@ -199,8 +199,8 @@ All errors print a descriptive message to stderr before exiting.
 ## YAML Parsing
 
 The signature YAML (`--in-sig`) is a simple flat document. Rather than pulling in yaml-cpp
-(which is already in libcrystals but not directly in obi-wan's main.cpp), parse with
-lightweight line-by-line `key: value` parsing — consistent with the fact that obi-wan
+(which is already in libcrystals but not directly in zorro's main.cpp), parse with
+lightweight line-by-line `key: value` parsing — consistent with the fact that zorro
 currently emits YAML by hand (no yaml-cpp in main.cpp).
 
 The verifier requires exactly two fields for cryptographic correctness:
@@ -221,10 +221,10 @@ A missing `tray_id` or `composite_sig` field is treated as a malformed sig file 
 
 ```bash
 # Basic sign/verify roundtrip — crystals level2-25519
-scotty keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+hybrid keygen --alias alice --profile level2-25519 > /tmp/alice.tray
 echo "hello world" > /tmp/doc.txt
-obi-wan sign   --tray /tmp/alice.tray --in-file /tmp/doc.txt > /tmp/doc.sig.yaml
-obi-wan verify --tray /tmp/alice.tray --in-file /tmp/doc.txt --in-sig /tmp/doc.sig.yaml
+zorro sign   --tray /tmp/alice.tray --in-file /tmp/doc.txt > /tmp/doc.sig.yaml
+zorro verify --tray /tmp/alice.tray --in-file /tmp/doc.txt --in-sig /tmp/doc.sig.yaml
 
 # All 4 crystals hybrid profiles: level2-25519, level2, level3, level5
 # mceliece+slhdsa with 4 slots: level2, level3, level4, level5
@@ -232,29 +232,29 @@ obi-wan verify --tray /tmp/alice.tray --in-file /tmp/doc.txt --in-sig /tmp/doc.s
 
 # Tampered file → exit 2
 echo "tampered" > /tmp/doc2.txt
-obi-wan verify --tray /tmp/alice.tray --in-file /tmp/doc2.txt --in-sig /tmp/doc.sig.yaml
+zorro verify --tray /tmp/alice.tray --in-file /tmp/doc2.txt --in-sig /tmp/doc.sig.yaml
 
 # Wrong tray → exit 2 (tray_id mismatch)
-scotty keygen --alias bob --profile level2-25519 > /tmp/bob.tray
-obi-wan verify --tray /tmp/bob.tray --in-file /tmp/doc.txt --in-sig /tmp/doc.sig.yaml
+hybrid keygen --alias bob --profile level2-25519 > /tmp/bob.tray
+zorro verify --tray /tmp/bob.tray --in-file /tmp/doc.txt --in-sig /tmp/doc.sig.yaml
 
 # Renamed HYKE commands still work
-obi-wan encrypt+sign   --tray /tmp/alice.tray /tmp/doc.txt > /tmp/doc.hyke
-obi-wan verify+decrypt --tray /tmp/alice.tray /tmp/doc.hyke | diff /tmp/doc.txt -
+zorro encrypt+sign   --tray /tmp/alice.tray /tmp/doc.txt > /tmp/doc.hyke
+zorro verify+decrypt --tray /tmp/alice.tray /tmp/doc.hyke | diff /tmp/doc.txt -
 
 # Partial tray → exit 1 with clear error
-scotty keygen --alias cl-only --profile level0 > /tmp/cl.tray
-obi-wan sign --tray /tmp/cl.tray --in-file /tmp/doc.txt   # expect exit 1
+hybrid keygen --alias cl-only --profile level0 > /tmp/cl.tray
+zorro sign --tray /tmp/cl.tray --in-file /tmp/doc.txt   # expect exit 1
 
 # Tampered composite_sig blob → exit 2 (both sig checks fail)
 cp /tmp/doc.sig.yaml /tmp/doc.sig.corrupt.yaml
 # manually corrupt one base64 character in composite_sig field
-obi-wan verify --tray /tmp/alice.tray --in-file /tmp/doc.txt --in-sig /tmp/doc.sig.corrupt.yaml
+zorro verify --tray /tmp/alice.tray --in-file /tmp/doc.txt --in-sig /tmp/doc.sig.corrupt.yaml
 
 # 1MB binary file roundtrip
 dd if=/dev/urandom of=/tmp/big.bin bs=1M count=1
-obi-wan sign   --tray /tmp/alice.tray --in-file /tmp/big.bin > /tmp/big.sig.yaml
-obi-wan verify --tray /tmp/alice.tray --in-file /tmp/big.bin --in-sig /tmp/big.sig.yaml
+zorro sign   --tray /tmp/alice.tray --in-file /tmp/big.bin > /tmp/big.sig.yaml
+zorro verify --tray /tmp/alice.tray --in-file /tmp/big.bin --in-sig /tmp/big.sig.yaml
 ```
 
 ---
@@ -263,4 +263,4 @@ obi-wan verify --tray /tmp/alice.tray --in-file /tmp/big.bin --in-sig /tmp/big.s
 
 - Existing HYKE (`encrypt+sign` / `verify+decrypt`) code is left unchanged.
 - No changes to `libcrystals-1.2` public API.
-- No streaming / chunked file hashing (entire file read into memory, consistent with existing obi-wan behaviour).
+- No streaming / chunked file hashing (entire file read into memory, consistent with existing zorro behaviour).

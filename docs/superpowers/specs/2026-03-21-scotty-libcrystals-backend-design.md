@@ -1,28 +1,28 @@
-# Design: Migrate scotty to libcrystals-1.1 backend
+# Design: Migrate hybrid to libcrystals-1.1 backend
 
 **Date:** 2026-03-21
 **Status:** Approved
-**Scope:** scotty only (obi-wan to follow the same pattern in a subsequent migration)
+**Scope:** hybrid only (zorro to follow the same pattern in a subsequent migration)
 
 ---
 
 ## Background
 
-scotty currently duplicates the implementation of all crypto primitives, YAML I/O, tray
+hybrid currently duplicates the implementation of all crypto primitives, YAML I/O, tray
 construction, and protect/unprotect logic that also live inside libcrystals-1.1. The
 library was extracted from the tools after the fact; going forward the discipline is
 library-first — new functionality is added to libcrystals first, then called from the
-application. This migration establishes that pattern by making scotty a thin CLI shell
+application. This migration establishes that pattern by making hybrid a thin CLI shell
 backed entirely by `Crystals::crystals`.
 
 ---
 
 ## Architecture
 
-After migration scotty's `src/` shrinks from ~20 files to **one file**: `main.cpp`.
+After migration hybrid's `src/` shrinks from ~20 files to **one file**: `main.cpp`.
 
 ```
-scotty (binary)
+hybrid (binary)
   └── main.cpp            ← arg parsing, TTY interaction, password hygiene, file I/O
         │
         └── Crystals::crystals (libcrystals-1.1.a @ /usr/local)
@@ -32,7 +32,7 @@ scotty (binary)
               └── protect_tray / unprotect_tray
 ```
 
-**Boundary rule:** The library owns all crypto and serialisation. scotty owns everything
+**Boundary rule:** The library owns all crypto and serialisation. hybrid owns everything
 that touches a human (arg parsing, TTY password prompts, entropy warnings, stdout/stderr)
 and everything that touches the filesystem (reading/writing files). `cmd_protect` and
 `cmd_unprotect` are pure CLI handlers that call library functions — they stay in
@@ -42,7 +42,7 @@ and everything that touches the filesystem (reading/writing files). `cmd_protect
 
 ## API Status — No Gap
 
-All functions needed by scotty are already declared in `crystals.hpp`:
+All functions needed by hybrid are already declared in `crystals.hpp`:
 - `make_tray`, `make_public_tray`, `validate_tray_uuid` — `@api-stable v1.0`
 - `emit_tray_yaml` — `@api-stable v1.0` (line 1328 of crystals.hpp)
 - `load_tray_yaml`, `load_secure_tray_yaml`, `emit_secure_tray_yaml` — `@api-stable v1.0`
@@ -54,9 +54,9 @@ No libcrystals patch is required before beginning the migration.
 
 ## Migration Plan
 
-### Phase 1 — Migrate scotty (on a worktree branch)
+### Phase 1 — Migrate hybrid (on a worktree branch)
 
-Branch name: `scotty-libcrystals-backend`
+Branch name: `hybrid-libcrystals-backend`
 
 #### 1a. CMakeLists.txt
 
@@ -72,7 +72,7 @@ Replace the current ~106-line file with a streamlined version:
   transitively via `Crystals::crystals` (CrystalsConfig.cmake exposes yaml-cpp in
   `INTERFACE_LINK_LIBRARIES`)
 - Add: `find_package(Crystals REQUIRED HINTS /usr/local/lib/cmake/crystals)`
-- Add: `target_link_libraries(scotty PRIVATE Crystals::crystals)`
+- Add: `target_link_libraries(hybrid PRIVATE Crystals::crystals)`
 - Keep: `find_package(OpenSSL REQUIRED)` — needed for `openssl/ui.h`
   (`EVP_read_pw_string`) and `openssl/crypto.h` (`OPENSSL_cleanse`) in
   `cmd_protect`/`cmd_unprotect`
@@ -117,40 +117,40 @@ Replace the current ~106-line file with a streamlined version:
 
 ## Verification
 
-Run all scotty test commands from CLAUDE.md after a clean build:
+Run all hybrid test commands from CLAUDE.md after a clean build:
 
 ```bash
 # All 6 crystals profiles
-./pq/scotty/build/scotty keygen --alias alice --profile level2-25519
-./pq/scotty/build/scotty keygen --alias alice --profile level0
-./pq/scotty/build/scotty keygen --alias alice --profile level1
-./pq/scotty/build/scotty keygen --alias alice --profile level2
-./pq/scotty/build/scotty keygen --alias alice --profile level3
-./pq/scotty/build/scotty keygen --alias alice --profile level5
+./pq/hybrid/build/hybrid keygen --alias alice --profile level2-25519
+./pq/hybrid/build/hybrid keygen --alias alice --profile level0
+./pq/hybrid/build/hybrid keygen --alias alice --profile level1
+./pq/hybrid/build/hybrid keygen --alias alice --profile level2
+./pq/hybrid/build/hybrid keygen --alias alice --profile level3
+./pq/hybrid/build/hybrid keygen --alias alice --profile level5
 
 # All 5 mceliece+slhdsa profiles
-./pq/scotty/build/scotty keygen --group mceliece+slhdsa --alias alice --profile level1
-./pq/scotty/build/scotty keygen --group mceliece+slhdsa --alias alice --profile level2
-./pq/scotty/build/scotty keygen --group mceliece+slhdsa --alias alice --profile level3
-./pq/scotty/build/scotty keygen --group mceliece+slhdsa --alias alice --profile level4
-./pq/scotty/build/scotty keygen --group mceliece+slhdsa --alias alice --profile level5
+./pq/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias alice --profile level1
+./pq/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias alice --profile level2
+./pq/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias alice --profile level3
+./pq/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias alice --profile level4
+./pq/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias alice --profile level5
 
 # --out and --public
-./pq/scotty/build/scotty keygen --alias alice --out /tmp/alice.tray
-./pq/scotty/build/scotty keygen --alias alice --public --out /tmp/alice.tray
+./pq/hybrid/build/hybrid keygen --alias alice --out /tmp/alice.tray
+./pq/hybrid/build/hybrid keygen --alias alice --public --out /tmp/alice.tray
 
 # protect / unprotect roundtrip
-./pq/scotty/build/scotty keygen --alias alice --out /tmp/alice.tray
+./pq/hybrid/build/hybrid keygen --alias alice --out /tmp/alice.tray
 echo "testpass123" > /tmp/pw.txt
-./pq/scotty/build/scotty protect --in /tmp/alice.tray --out /tmp/alice.sec.tray --password-file /tmp/pw.txt
-./pq/scotty/build/scotty unprotect --in /tmp/alice.sec.tray --out /tmp/alice.plain.tray --password-file /tmp/pw.txt
+./pq/hybrid/build/hybrid protect --in /tmp/alice.tray --out /tmp/alice.sec.tray --password-file /tmp/pw.txt
+./pq/hybrid/build/hybrid unprotect --in /tmp/alice.sec.tray --out /tmp/alice.plain.tray --password-file /tmp/pw.txt
 diff /tmp/alice.tray /tmp/alice.plain.tray
 
 # Error cases
-./pq/scotty/build/scotty keygen                             # → exit 1 (missing --alias)
-./pq/scotty/build/scotty keygen --alias x --group bad       # → exit 1 (unknown group)
+./pq/hybrid/build/hybrid keygen                             # → exit 1 (missing --alias)
+./pq/hybrid/build/hybrid keygen --alias x --group bad       # → exit 1 (unknown group)
 echo "wrongpass" > /tmp/wrong.txt
-./pq/scotty/build/scotty unprotect --in /tmp/alice.sec.tray --out /tmp/x.tray --password-file /tmp/wrong.txt
+./pq/hybrid/build/hybrid unprotect --in /tmp/alice.sec.tray --out /tmp/x.tray --password-file /tmp/wrong.txt
 # → exit 2 (wrong password)
 ```
 
@@ -160,15 +160,15 @@ echo "wrongpass" > /tmp/wrong.txt
 
 | Location | Change |
 |----------|--------|
-| `pq/scotty/CMakeLists.txt` | Rewrite: find_package(Crystals) replaces all manual deps |
-| `pq/scotty/src/main.cpp` | New include + fold in cmd_protect/cmd_unprotect |
-| `pq/scotty/src/` (21 files) | Delete |
+| `pq/hybrid/CMakeLists.txt` | Rewrite: find_package(Crystals) replaces all manual deps |
+| `pq/hybrid/src/main.cpp` | New include + fold in cmd_protect/cmd_unprotect |
+| `pq/hybrid/src/` (21 files) | Delete |
 
 ---
 
 ## Non-Goals
 
-- No changes to scotty's CLI interface, exit codes, or output format
+- No changes to hybrid's CLI interface, exit codes, or output format
 - No changes to the YAML wire format
-- obi-wan migration is a separate, subsequent task
+- zorro migration is a separate, subsequent task
 - No changes to libcrystals-1.1's `@api-stable` declarations

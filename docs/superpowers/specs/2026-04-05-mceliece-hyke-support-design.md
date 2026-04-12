@@ -2,13 +2,13 @@
 
 **Date:** 2026-04-05  
 **Status:** Approved for implementation  
-**Scope:** Unblock `@api-stable-1.2` — allow McEliece Level2–5 trays to be used with `obi-wan encrypt+sign` / `verify+decrypt` (HYKE wire format)
+**Scope:** Unblock `@api-stable-1.2` — allow McEliece Level2–5 trays to be used with `zorro encrypt+sign` / `verify+decrypt` (HYKE wire format)
 
 ---
 
 ## Background
 
-`tray_id_byte()` and `tray_type_from_id()` in `crystals.hpp` encode tray type into the HYKE wire header. McEliece tray types (`McEliece_Level1`–`Level5`) were absent from both functions, causing them to throw `std::invalid_argument("Unknown TrayType")` when any McEliece tray was used for HYKE. All other crypto dispatch for McEliece (KEM encaps/decaps, SLH-DSA sign/verify) was already correct in `obi-wan`.
+`tray_id_byte()` and `tray_type_from_id()` in `crystals.hpp` encode tray type into the HYKE wire header. McEliece tray types (`McEliece_Level1`–`Level5`) were absent from both functions, causing them to throw `std::invalid_argument("Unknown TrayType")` when any McEliece tray was used for HYKE. All other crypto dispatch for McEliece (KEM encaps/decaps, SLH-DSA sign/verify) was already correct in `zorro`.
 
 McEliece Level1 is a PQ-only tray (no classical KEM or sig slots) and structurally cannot participate in HYKE, which requires all four slots. It receives a tray ID byte for API completeness but is rejected early with a clear diagnostic.
 
@@ -66,7 +66,7 @@ Consumers call this before any HYKE operation to obtain a meaningful diagnostic 
 
 ---
 
-## `obi-wan` Changes (`src/main.cpp`)
+## `zorro` Changes (`src/main.cpp`)
 
 Two surgical insertions immediately after the tray is loaded in:
 
@@ -83,7 +83,7 @@ if (!is_tray_complete(tray.tray_type)) {
 }
 ```
 
-No other changes to `obi-wan`. KEM dispatch (`mceliece_kem::encaps/decaps`) and sig dispatch (`slhdsa_sig::sign/verify`) are already correct for McEliece trays.
+No other changes to `zorro`. KEM dispatch (`mceliece_kem::encaps/decaps`) and sig dispatch (`slhdsa_sig::sign/verify`) are already correct for McEliece trays.
 
 ---
 
@@ -103,14 +103,14 @@ New entries to add to verified-working:
 
 ```bash
 # McEliece HYKE encrypt+sign / verify+decrypt (Level2–5)
-./scotty keygen --group mceliece+slhdsa --alias mc --profile level2 --out /tmp/mc.tray
+./hybrid keygen --group mceliece+slhdsa --alias mc --profile level2 --out /tmp/mc.tray
 echo "hello" > /tmp/plain.txt
-./obi-wan encrypt+sign   --tray /tmp/mc.tray /tmp/plain.txt > /tmp/mc.hyke
-./obi-wan verify+decrypt --tray /tmp/mc.tray /tmp/mc.hyke | diff /tmp/plain.txt -
+./zorro encrypt+sign   --tray /tmp/mc.tray /tmp/plain.txt > /tmp/mc.hyke
+./zorro verify+decrypt --tray /tmp/mc.tray /tmp/mc.hyke | diff /tmp/plain.txt -
 
 # McEliece Level1 → partial tray error
-./scotty keygen --group mceliece+slhdsa --alias mc1 --profile level1 --out /tmp/mc1.tray
-./obi-wan encrypt+sign --tray /tmp/mc1.tray /tmp/plain.txt  # expect exit 1 + partial-tray message
+./hybrid keygen --group mceliece+slhdsa --alias mc1 --profile level1 --out /tmp/mc1.tray
+./zorro encrypt+sign --tray /tmp/mc1.tray /tmp/plain.txt  # expect exit 1 + partial-tray message
 ```
 
 ---
@@ -120,6 +120,6 @@ echo "hello" > /tmp/plain.txt
 | File | Change |
 |------|--------|
 | `pqc/libcrystals-1.2/include/crystals/crystals.hpp` | Add cases to `tray_id_byte()`, `tray_type_from_id()`; add `is_tray_complete()` |
-| `pqc/obi-wan/src/main.cpp` | Add `is_tray_complete()` guard in `cmd_encrypt_sign` and `cmd_verify_decrypt` |
+| `pqc/zorro/src/main.cpp` | Add `is_tray_complete()` guard in `cmd_encrypt_sign` and `cmd_verify_decrypt` |
 | `pqc/libcrystals-1.2/test/api_stability_test-1.2.cpp` | New assertions for McEliece IDs and `is_tray_complete()` |
 | `pqc/CLAUDE.md` | Update verified-working section |

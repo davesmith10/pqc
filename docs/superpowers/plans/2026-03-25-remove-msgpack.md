@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove all msgpack-c read/write support from libcrystals-1.2, scotty, obi-wan, padme, and the standalone pqc/msgpack library — trays are YAML-only going forward.
+**Goal:** Remove all msgpack-c read/write support from libcrystals-1.2, hybrid, zorro, penelope, and the standalone pqc/msgpack library — trays are YAML-only going forward.
 
-**Architecture:** The msgpack-c header-only library is used in two places: `libcrystals-1.2/src/tray_pack.cpp` (compiled into the fat archive) and the standalone `pqc/msgpack/` CMake project. Consumers (obi-wan, padme) reach msgpack through the `Crystals::crystals` imported target. Removal touches the library source, the public header, the generated install scripts, two consumer tools, and the standalone library. `load_tray()` stays in the public API (same signature) but becomes YAML-only. The `tray_mp` namespace must be removed from `crystals.hpp` — this is a breaking change to `@api-stable v1.0` that is intentional per user direction.
+**Architecture:** The msgpack-c header-only library is used in two places: `libcrystals-1.2/src/tray_pack.cpp` (compiled into the fat archive) and the standalone `pqc/msgpack/` CMake project. Consumers (zorro, penelope) reach msgpack through the `Crystals::crystals` imported target. Removal touches the library source, the public header, the generated install scripts, two consumer tools, and the standalone library. `load_tray()` stays in the public API (same signature) but becomes YAML-only. The `tray_mp` namespace must be removed from `crystals.hpp` — this is a breaking change to `@api-stable v1.0` that is intentional per user direction.
 
 **Tech Stack:** C++17, CMake 3.16, OpenSSL, yaml-cpp, BLAKE3
 
@@ -29,8 +29,8 @@
 | `pqc/libcrystals-1.2/install.sh` | Modify — remove `MSGPACK_NO_BOOST` from generated CMake config and pkg-config |
 | `pqc/libcrystals-1.2/test/test_crystals.cpp` | Modify — remove `test_msgpack_roundtrip`, rewrite `test_uuid_verification` |
 | `pqc/libcrystals-1.2/test/api_stability_test-1.0.cpp` | Modify — remove tray_mp static-asserts |
-| `pqc/obi-wan/src/main.cpp` | Modify — update one help-text line |
-| `pqc/padme/src/main.cpp` | Modify — remove `has_yaml_ext`, rewrite `write_tray_file`, update help text |
+| `pqc/zorro/src/main.cpp` | Modify — update one help-text line |
+| `pqc/penelope/src/main.cpp` | Modify — remove `has_yaml_ext`, rewrite `write_tray_file`, update help text |
 | `pqc/msgpack/` | **Delete entire directory** |
 | `pqc/CLAUDE.md` | Modify — remove msgpack sections |
 
@@ -436,14 +436,14 @@ git commit -m "feat(libcrystals-1.2): remove MSGPACK_NO_BOOST from generated cma
 
 ---
 
-## Task 5: obi-wan — Update help text
+## Task 5: zorro — Update help text
 
 **Files:**
-- Modify: `pqc/obi-wan/src/main.cpp`
+- Modify: `pqc/zorro/src/main.cpp`
 
 - [ ] **Step 5.1: Update the --tray help string (line 29)**
 
-Find in `pqc/obi-wan/src/main.cpp`:
+Find in `pqc/zorro/src/main.cpp`:
 
 ```cpp
 "  --tray   Tray file (YAML or msgpack, auto-detected)\n"
@@ -455,11 +455,11 @@ Replace with:
 "  --tray   Tray file (YAML)\n"
 ```
 
-- [ ] **Step 5.2: Rebuild obi-wan**
+- [ ] **Step 5.2: Rebuild zorro**
 
 ```bash
-cmake -S pqc/obi-wan -B pqc/obi-wan/build
-cmake --build pqc/obi-wan/build -j$(nproc) 2>&1 | tail -10
+cmake -S pqc/zorro -B pqc/zorro/build
+cmake --build pqc/zorro/build -j$(nproc) 2>&1 | tail -10
 ```
 
 Expected: clean build.
@@ -467,10 +467,10 @@ Expected: clean build.
 - [ ] **Step 5.3: Smoke test**
 
 ```bash
-./pqc/scotty/build/scotty keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+./pqc/hybrid/build/hybrid keygen --alias alice --profile level2-25519 > /tmp/alice.tray
 echo "hello" > /tmp/plain.txt
-./pqc/obi-wan/build/obi-wan encrypt --tray /tmp/alice.tray /tmp/plain.txt > /tmp/out.armored
-./pqc/obi-wan/build/obi-wan decrypt --tray /tmp/alice.tray /tmp/out.armored | diff /tmp/plain.txt -
+./pqc/zorro/build/zorro encrypt --tray /tmp/alice.tray /tmp/plain.txt > /tmp/out.armored
+./pqc/zorro/build/zorro decrypt --tray /tmp/alice.tray /tmp/out.armored | diff /tmp/plain.txt -
 ```
 
 Expected: decrypt matches original.
@@ -478,16 +478,16 @@ Expected: decrypt matches original.
 - [ ] **Step 5.4: Commit**
 
 ```bash
-git add pqc/obi-wan/src/main.cpp
-git commit -m "feat(obi-wan): update help text — tray input is YAML only"
+git add pqc/zorro/src/main.cpp
+git commit -m "feat(zorro): update help text — tray input is YAML only"
 ```
 
 ---
 
-## Task 6: padme — Remove msgpack write support
+## Task 6: penelope — Remove msgpack write support
 
 **Files:**
-- Modify: `pqc/padme/src/main.cpp`
+- Modify: `pqc/penelope/src/main.cpp`
 
 - [ ] **Step 6.1: Delete has_yaml_ext and rewrite write_tray_file**
 
@@ -540,11 +540,11 @@ Replace with:
 "  --out-tray <file>      Output tray (YAML format)\n"
 ```
 
-- [ ] **Step 6.3: Rebuild padme**
+- [ ] **Step 6.3: Rebuild penelope**
 
 ```bash
-cmake -S pqc/padme -B pqc/padme/build
-cmake --build pqc/padme/build -j$(nproc) 2>&1 | tail -10
+cmake -S pqc/penelope -B pqc/penelope/build
+cmake --build pqc/penelope/build -j$(nproc) 2>&1 | tail -10
 ```
 
 Expected: clean build with no references to `tray_mp` or `msgpack`.
@@ -554,7 +554,7 @@ Expected: clean build with no references to `tray_mp` or `msgpack`.
 Requires a tray and a PNG fixture. Basic build + help-text check:
 
 ```bash
-./pqc/padme/build/padme --help 2>&1 | grep -E "in-tray|out-tray"
+./pqc/penelope/build/penelope --help 2>&1 | grep -E "in-tray|out-tray"
 ```
 
 Expected: shows `(YAML)` and `(YAML format)`, no mention of msgpack.
@@ -562,8 +562,8 @@ Expected: shows `(YAML)` and `(YAML format)`, no mention of msgpack.
 - [ ] **Step 6.5: Commit**
 
 ```bash
-git add pqc/padme/src/main.cpp
-git commit -m "feat(padme): remove msgpack tray output — write_tray_file is YAML-only"
+git add pqc/penelope/src/main.cpp
+git commit -m "feat(penelope): remove msgpack tray output — write_tray_file is YAML-only"
 ```
 
 ---
@@ -622,9 +622,9 @@ Find and remove from the `## Testing` section:
 ./pqc/msgpack/build/test_roundtrip
 ```
 
-- [ ] **Step 8.3: Update obi-wan architecture doc**
+- [ ] **Step 8.3: Update zorro architecture doc**
 
-In `## Architecture / obi-wan Architecture`, find the library API line:
+In `## Architecture / zorro Architecture`, find the library API line:
 ```
 - `load_tray` — auto-detects YAML vs msgpack by first byte
 ```
@@ -640,7 +640,7 @@ Also in the same section, find and update the **Library API used** list note abo
 Find the `### msgpack Architecture` subsection and delete it entirely (roughly 15 lines covering
 tray_pack.hpp/cpp, wire format, dependencies, and the warning about msgpack-c).
 
-- [ ] **Step 8.5: Update padme CMakeLists.txt description**
+- [ ] **Step 8.5: Update penelope CMakeLists.txt description**
 
 In the `## CMakeLists.txt Paths` section, find the msgpack entry:
 ```
@@ -648,16 +648,16 @@ In the `## CMakeLists.txt Paths` section, find the msgpack entry:
 ```
 Delete that line.
 
-- [ ] **Step 8.6: Update Verified Working (obi-wan)**
+- [ ] **Step 8.6: Update Verified Working (zorro)**
 
 Find and remove the line:
 ```
 - YAML and msgpack tray formats both load correctly for encrypt+sign/verify+decrypt
 ```
 
-- [ ] **Step 8.7: Update padme section**
+- [ ] **Step 8.7: Update penelope section**
 
-In the `## padme Tool` section, update the description to remove msgpack from the tray format
+In the `## penelope Tool` section, update the description to remove msgpack from the tray format
 description. Currently it says YAML or msgpack for `--in-tray` and `--out-tray`; update to YAML only.
 
 - [ ] **Step 8.8: Remove msgpack-c note from repo layout**
@@ -695,41 +695,41 @@ cmake -S pqc/libcrystals-1.2 -B pqc/libcrystals-1.2/build \
 cmake --build pqc/libcrystals-1.2/build -j$(nproc)
 ./pqc/libcrystals-1.2/build/test_crystals
 
-# Rebuild scotty
-cmake -S pqc/scotty -B pqc/scotty/build && cmake --build pqc/scotty/build -j$(nproc)
+# Rebuild hybrid
+cmake -S pqc/hybrid -B pqc/hybrid/build && cmake --build pqc/hybrid/build -j$(nproc)
 
-# Rebuild obi-wan
-cmake -S pqc/obi-wan -B pqc/obi-wan/build && cmake --build pqc/obi-wan/build -j$(nproc)
+# Rebuild zorro
+cmake -S pqc/zorro -B pqc/zorro/build && cmake --build pqc/zorro/build -j$(nproc)
 
-# Rebuild padme
-cmake -S pqc/padme -B pqc/padme/build && cmake --build pqc/padme/build -j$(nproc)
+# Rebuild penelope
+cmake -S pqc/penelope -B pqc/penelope/build && cmake --build pqc/penelope/build -j$(nproc)
 ```
 
 - [ ] **Step 9.2: Verify no msgpack symbols in any binary**
 
 ```bash
-nm pqc/scotty/build/scotty   | grep -i msgpack && echo FOUND || echo clean
-nm pqc/obi-wan/build/obi-wan | grep -i msgpack && echo FOUND || echo clean
-nm pqc/padme/build/padme     | grep -i msgpack && echo FOUND || echo clean
+nm pqc/hybrid/build/hybrid   | grep -i msgpack && echo FOUND || echo clean
+nm pqc/zorro/build/zorro | grep -i msgpack && echo FOUND || echo clean
+nm pqc/penelope/build/penelope     | grep -i msgpack && echo FOUND || echo clean
 ```
 
 Expected: `clean` for all three.
 
-- [ ] **Step 9.3: Full obi-wan smoke test**
+- [ ] **Step 9.3: Full zorro smoke test**
 
 ```bash
-./pqc/scotty/build/scotty keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+./pqc/hybrid/build/hybrid keygen --alias alice --profile level2-25519 > /tmp/alice.tray
 echo "hello world" > /tmp/plain.txt
 
 # encrypt/decrypt (SHAKE + AES-256-GCM)
-./pqc/obi-wan/build/obi-wan encrypt --tray /tmp/alice.tray /tmp/plain.txt > /tmp/out.armored
-./pqc/obi-wan/build/obi-wan decrypt --tray /tmp/alice.tray /tmp/out.armored | diff /tmp/plain.txt -
+./pqc/zorro/build/zorro encrypt --tray /tmp/alice.tray /tmp/plain.txt > /tmp/out.armored
+./pqc/zorro/build/zorro decrypt --tray /tmp/alice.tray /tmp/out.armored | diff /tmp/plain.txt -
 
 # encrypt+sign / verify+decrypt
-./pqc/obi-wan/build/obi-wan encrypt+sign   --tray /tmp/alice.tray /tmp/plain.txt > /tmp/alice.hyke
-./pqc/obi-wan/build/obi-wan verify+decrypt --tray /tmp/alice.tray /tmp/alice.hyke | diff /tmp/plain.txt -
+./pqc/zorro/build/zorro encrypt+sign   --tray /tmp/alice.tray /tmp/plain.txt > /tmp/alice.hyke
+./pqc/zorro/build/zorro verify+decrypt --tray /tmp/alice.tray /tmp/alice.hyke | diff /tmp/plain.txt -
 
-echo "All obi-wan smoke tests OK"
+echo "All zorro smoke tests OK"
 ```
 
 - [ ] **Step 9.4: Run libcrystals api_stability_tests**
@@ -748,9 +748,9 @@ Expected: all three exit with code 0 (build success = API contract enforced).
 grep -r "msgpack\|tray_mp\|MSGPACK" \
     pqc/libcrystals-1.2/src/ \
     pqc/libcrystals-1.2/include/ \
-    pqc/scotty/src/ \
-    pqc/obi-wan/src/ \
-    pqc/padme/src/ \
+    pqc/hybrid/src/ \
+    pqc/zorro/src/ \
+    pqc/penelope/src/ \
     pqc/libcrystals-1.2/CMakeLists.txt \
     pqc/libcrystals-1.2/install.sh \
     2>/dev/null

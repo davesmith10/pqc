@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add pure hybrid digital `sign` / `verify` commands to obi-wan, and rename the existing HYKE sign/verify to `encrypt+sign` / `verify+decrypt`.
+**Goal:** Add pure hybrid digital `sign` / `verify` commands to zorro, and rename the existing HYKE sign/verify to `encrypt+sign` / `verify+decrypt`.
 
-**Architecture:** All changes are in `pqc/obi-wan/src/main.cpp` (single-file pattern already established). New helper functions are inserted before the command functions. New commands are dispatched early in `main()` via their own arg-parsing blocks, consistent with how `gentok` / `valtok` are handled.
+**Architecture:** All changes are in `pqc/zorro/src/main.cpp` (single-file pattern already established). New helper functions are inserted before the command functions. New commands are dispatched early in `main()` via their own arg-parsing blocks, consistent with how `gentok` / `valtok` are handled.
 
 **Tech Stack:** C++17, OpenSSL (EVP_Digest for SHA-256, RAND_bytes for UUID generation), libcrystals-1.2 (ec_sig, dilithium_sig, slhdsa_sig, oqs_sig, base64_encode/decode, parse_uuid, load_tray).
 
@@ -16,7 +16,7 @@
 
 | File | Action | What changes |
 |---|---|---|
-| `pqc/obi-wan/src/main.cpp` | Modify | All changes — renames, helpers, new commands, dispatch |
+| `pqc/zorro/src/main.cpp` | Modify | All changes — renames, helpers, new commands, dispatch |
 
 No other files change. No library changes.
 
@@ -33,14 +33,14 @@ No other files change. No library changes.
 ## Task 1: Rename sign→encrypt+sign, verify→verify+decrypt
 
 **Files:**
-- Modify: `pqc/obi-wan/src/main.cpp`
+- Modify: `pqc/zorro/src/main.cpp`
 
 - [ ] **Step 1: Write the failing test — confirm new command names don't exist yet**
 
 ```bash
-cmake -S pqc/obi-wan -B pqc/obi-wan/build -DCMAKE_BUILD_TYPE=Release 2>/dev/null
-cmake --build pqc/obi-wan/build -j$(nproc) 2>/dev/null
-./pqc/obi-wan/build/obi-wan encrypt+sign 2>&1 | head -2
+cmake -S pqc/zorro -B pqc/zorro/build -DCMAKE_BUILD_TYPE=Release 2>/dev/null
+cmake --build pqc/zorro/build -j$(nproc) 2>/dev/null
+./pqc/zorro/build/zorro encrypt+sign 2>&1 | head -2
 ```
 Expected: `Error: unknown command 'encrypt+sign'`
 
@@ -128,11 +128,11 @@ Also update the description lines for sign/verify below the flags section:
 - [ ] **Step 7: Build and verify renamed commands work**
 
 ```bash
-cmake --build pqc/obi-wan/build -j$(nproc)
-./pqc/scotty/build/scotty keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+cmake --build pqc/zorro/build -j$(nproc)
+./pqc/hybrid/build/hybrid keygen --alias alice --profile level2-25519 > /tmp/alice.tray
 echo "hello" > /tmp/plain.txt
-./pqc/obi-wan/build/obi-wan encrypt+sign --tray /tmp/alice.tray /tmp/plain.txt > /tmp/alice.hyke
-./pqc/obi-wan/build/obi-wan verify+decrypt --tray /tmp/alice.tray /tmp/alice.hyke | diff /tmp/plain.txt -
+./pqc/zorro/build/zorro encrypt+sign --tray /tmp/alice.tray /tmp/plain.txt > /tmp/alice.hyke
+./pqc/zorro/build/zorro verify+decrypt --tray /tmp/alice.tray /tmp/alice.hyke | diff /tmp/plain.txt -
 echo "exit: $?"
 ```
 Expected: `exit: 0`
@@ -140,7 +140,7 @@ Expected: `exit: 0`
 - [ ] **Step 8: Confirm old `sign` name is rejected (valid only before Task 3 adds the new `sign` dispatch)**
 
 ```bash
-./pqc/obi-wan/build/obi-wan sign --tray /tmp/alice.tray /tmp/plain.txt 2>&1 | head -1
+./pqc/zorro/build/zorro sign --tray /tmp/alice.tray /tmp/plain.txt 2>&1 | head -1
 ```
 Expected: `Error: unknown command 'sign'`
 
@@ -149,8 +149,8 @@ Expected: `Error: unknown command 'sign'`
 - [ ] **Step 9: Commit**
 
 ```bash
-git add pqc/obi-wan/src/main.cpp
-git commit -m "rename obi-wan sign/verify to encrypt+sign/verify+decrypt"
+git add pqc/zorro/src/main.cpp
+git commit -m "rename zorro sign/verify to encrypt+sign/verify+decrypt"
 ```
 
 ---
@@ -158,7 +158,7 @@ git commit -m "rename obi-wan sign/verify to encrypt+sign/verify+decrypt"
 ## Task 2: Add helper functions
 
 **Files:**
-- Modify: `pqc/obi-wan/src/main.cpp`
+- Modify: `pqc/zorro/src/main.cpp`
 
 Insert all helpers after the slot-selection block (after the `find_pq_sig_slot` function, before `// ── encrypt command`).
 
@@ -311,15 +311,15 @@ static SigYaml parse_sig_yaml(const std::string& text) {
 - [ ] **Step 7: Build to confirm helpers compile**
 
 ```bash
-cmake --build pqc/obi-wan/build -j$(nproc) 2>&1 | tail -5
+cmake --build pqc/zorro/build -j$(nproc) 2>&1 | tail -5
 ```
-Expected: `[100%] Linking CXX executable obi-wan` or similar with no errors.
+Expected: `[100%] Linking CXX executable zorro` or similar with no errors.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add pqc/obi-wan/src/main.cpp
-git commit -m "add pure-sig helpers to obi-wan (sha256, uuid, tray_type_to_profile, composite sig pack/unpack, sig yaml)"
+git add pqc/zorro/src/main.cpp
+git commit -m "add pure-sig helpers to zorro (sha256, uuid, tray_type_to_profile, composite sig pack/unpack, sig yaml)"
 ```
 
 ---
@@ -327,14 +327,14 @@ git commit -m "add pure-sig helpers to obi-wan (sha256, uuid, tray_type_to_profi
 ## Task 3: Add `cmd_pure_sign` and dispatch
 
 **Files:**
-- Modify: `pqc/obi-wan/src/main.cpp`
+- Modify: `pqc/zorro/src/main.cpp`
 
 - [ ] **Step 1: Write the failing test**
 
 ```bash
-./pqc/scotty/build/scotty keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+./pqc/hybrid/build/hybrid keygen --alias alice --profile level2-25519 > /tmp/alice.tray
 echo "hello world" > /tmp/doc.txt
-./pqc/obi-wan/build/obi-wan sign --tray /tmp/alice.tray --in-file /tmp/doc.txt 2>&1 | head -1
+./pqc/zorro/build/zorro sign --tray /tmp/alice.tray --in-file /tmp/doc.txt 2>&1 | head -1
 ```
 Expected: `Error: unknown command 'sign'`
 
@@ -463,14 +463,14 @@ Insert **before** those lines:
 - [ ] **Step 4: Build**
 
 ```bash
-cmake --build pqc/obi-wan/build -j$(nproc) 2>&1 | tail -3
+cmake --build pqc/zorro/build -j$(nproc) 2>&1 | tail -3
 ```
 Expected: build succeeds with no errors.
 
 - [ ] **Step 5: Run sign test**
 
 ```bash
-./pqc/obi-wan/build/obi-wan sign --tray /tmp/alice.tray --in-file /tmp/doc.txt > /tmp/doc.sig.yaml
+./pqc/zorro/build/zorro sign --tray /tmp/alice.tray --in-file /tmp/doc.txt > /tmp/doc.sig.yaml
 echo "exit: $?"
 cat /tmp/doc.sig.yaml
 ```
@@ -479,8 +479,8 @@ Expected: exit 0. YAML contains `signature_id`, `tray_id`, `tray_alias: "alice"`
 - [ ] **Step 6: Test partial tray rejected**
 
 ```bash
-./pqc/scotty/build/scotty keygen --alias cl-only --profile level0 > /tmp/cl.tray
-./pqc/obi-wan/build/obi-wan sign --tray /tmp/cl.tray --in-file /tmp/doc.txt 2>&1
+./pqc/hybrid/build/hybrid keygen --alias cl-only --profile level0 > /tmp/cl.tray
+./pqc/zorro/build/zorro sign --tray /tmp/cl.tray --in-file /tmp/doc.txt 2>&1
 echo "exit: $?"
 ```
 Expected: error message about missing sig slots; exit 1.
@@ -488,8 +488,8 @@ Expected: error message about missing sig slots; exit 1.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add pqc/obi-wan/src/main.cpp
-git commit -m "add obi-wan sign command (pure hybrid digital signature)"
+git add pqc/zorro/src/main.cpp
+git commit -m "add zorro sign command (pure hybrid digital signature)"
 ```
 
 ---
@@ -497,12 +497,12 @@ git commit -m "add obi-wan sign command (pure hybrid digital signature)"
 ## Task 4: Add `cmd_pure_verify` and dispatch
 
 **Files:**
-- Modify: `pqc/obi-wan/src/main.cpp`
+- Modify: `pqc/zorro/src/main.cpp`
 
 - [ ] **Step 1: Write the failing test**
 
 ```bash
-./pqc/obi-wan/build/obi-wan verify --tray /tmp/alice.tray --in-file /tmp/doc.txt --in-sig /tmp/doc.sig.yaml 2>&1 | head -1
+./pqc/zorro/build/zorro verify --tray /tmp/alice.tray --in-file /tmp/doc.txt --in-sig /tmp/doc.sig.yaml 2>&1 | head -1
 ```
 Expected: `Error: unknown command 'verify'`
 
@@ -642,14 +642,14 @@ In `main()`, immediately after the `sign` dispatch block added in Task 3, insert
 - [ ] **Step 4: Build**
 
 ```bash
-cmake --build pqc/obi-wan/build -j$(nproc) 2>&1 | tail -3
+cmake --build pqc/zorro/build -j$(nproc) 2>&1 | tail -3
 ```
 Expected: build succeeds.
 
 - [ ] **Step 5: Basic roundtrip test**
 
 ```bash
-./pqc/obi-wan/build/obi-wan verify \
+./pqc/zorro/build/zorro verify \
     --tray /tmp/alice.tray \
     --in-file /tmp/doc.txt \
     --in-sig /tmp/doc.sig.yaml
@@ -661,7 +661,7 @@ Expected: exit 0. YAML output contains `verified: true` plus matching `tray_id`,
 
 ```bash
 echo "tampered" > /tmp/doc_tampered.txt
-./pqc/obi-wan/build/obi-wan verify \
+./pqc/zorro/build/zorro verify \
     --tray /tmp/alice.tray \
     --in-file /tmp/doc_tampered.txt \
     --in-sig /tmp/doc.sig.yaml 2>&1
@@ -672,8 +672,8 @@ Expected: `Error: classical signature INVALID`; exit 2.
 - [ ] **Step 7: Wrong tray test**
 
 ```bash
-./pqc/scotty/build/scotty keygen --alias bob --profile level2-25519 > /tmp/bob.tray
-./pqc/obi-wan/build/obi-wan verify \
+./pqc/hybrid/build/hybrid keygen --alias bob --profile level2-25519 > /tmp/bob.tray
+./pqc/zorro/build/zorro verify \
     --tray /tmp/bob.tray \
     --in-file /tmp/doc.txt \
     --in-sig /tmp/doc.sig.yaml 2>&1
@@ -684,8 +684,8 @@ Expected: `Error: tray_id mismatch`; exit 2.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add pqc/obi-wan/src/main.cpp
-git commit -m "add obi-wan verify command (pure hybrid signature verification)"
+git add pqc/zorro/src/main.cpp
+git commit -m "add zorro verify command (pure hybrid signature verification)"
 ```
 
 ---
@@ -701,9 +701,9 @@ Run the full test matrix from the spec. All should produce exit 0 unless noted.
 
 ```bash
 for profile in level2-25519 level2 level3 level5; do
-    ./pqc/scotty/build/scotty keygen --alias test --profile $profile > /tmp/t.tray
-    ./pqc/obi-wan/build/obi-wan sign   --tray /tmp/t.tray --in-file /tmp/doc.txt > /tmp/t.sig.yaml
-    ./pqc/obi-wan/build/obi-wan verify --tray /tmp/t.tray --in-file /tmp/doc.txt --in-sig /tmp/t.sig.yaml
+    ./pqc/hybrid/build/hybrid keygen --alias test --profile $profile > /tmp/t.tray
+    ./pqc/zorro/build/zorro sign   --tray /tmp/t.tray --in-file /tmp/doc.txt > /tmp/t.sig.yaml
+    ./pqc/zorro/build/zorro verify --tray /tmp/t.tray --in-file /tmp/doc.txt --in-sig /tmp/t.sig.yaml
     echo "$profile: $?"
 done
 ```
@@ -713,9 +713,9 @@ Expected: all exit 0.
 
 ```bash
 for profile in level2 level3 level4 level5; do
-    ./pqc/scotty/build/scotty keygen --group mceliece+slhdsa --alias test --profile $profile > /tmp/t.tray
-    ./pqc/obi-wan/build/obi-wan sign   --tray /tmp/t.tray --in-file /tmp/doc.txt > /tmp/t.sig.yaml
-    ./pqc/obi-wan/build/obi-wan verify --tray /tmp/t.tray --in-file /tmp/doc.txt --in-sig /tmp/t.sig.yaml
+    ./pqc/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias test --profile $profile > /tmp/t.tray
+    ./pqc/zorro/build/zorro sign   --tray /tmp/t.tray --in-file /tmp/doc.txt > /tmp/t.sig.yaml
+    ./pqc/zorro/build/zorro verify --tray /tmp/t.tray --in-file /tmp/doc.txt --in-sig /tmp/t.sig.yaml
     echo "mceliece $profile: $?"
 done
 ```
@@ -725,15 +725,15 @@ Expected: all exit 0.
 
 ```bash
 for profile in mk-level2 mk-level3 mk-level4; do
-    ./pqc/scotty/build/scotty keygen --group mlkem+mldsa --alias test --profile $profile > /tmp/t.tray
-    ./pqc/obi-wan/build/obi-wan sign   --tray /tmp/t.tray --in-file /tmp/doc.txt > /tmp/t.sig.yaml
-    ./pqc/obi-wan/build/obi-wan verify --tray /tmp/t.tray --in-file /tmp/doc.txt --in-sig /tmp/t.sig.yaml
+    ./pqc/hybrid/build/hybrid keygen --group mlkem+mldsa --alias test --profile $profile > /tmp/t.tray
+    ./pqc/zorro/build/zorro sign   --tray /tmp/t.tray --in-file /tmp/doc.txt > /tmp/t.sig.yaml
+    ./pqc/zorro/build/zorro verify --tray /tmp/t.tray --in-file /tmp/doc.txt --in-sig /tmp/t.sig.yaml
     echo "$profile: $?"
 done
 for profile in ff-level2 ff-level3; do
-    ./pqc/scotty/build/scotty keygen --group frodokem+falcon --alias test --profile $profile > /tmp/t.tray
-    ./pqc/obi-wan/build/obi-wan sign   --tray /tmp/t.tray --in-file /tmp/doc.txt > /tmp/t.sig.yaml
-    ./pqc/obi-wan/build/obi-wan verify --tray /tmp/t.tray --in-file /tmp/doc.txt --in-sig /tmp/t.sig.yaml
+    ./pqc/hybrid/build/hybrid keygen --group frodokem+falcon --alias test --profile $profile > /tmp/t.tray
+    ./pqc/zorro/build/zorro sign   --tray /tmp/t.tray --in-file /tmp/doc.txt > /tmp/t.sig.yaml
+    ./pqc/zorro/build/zorro verify --tray /tmp/t.tray --in-file /tmp/doc.txt --in-sig /tmp/t.sig.yaml
     echo "$profile: $?"
 done
 ```
@@ -743,9 +743,9 @@ Expected: all exit 0.
 
 ```bash
 dd if=/dev/urandom of=/tmp/big.bin bs=1M count=1 2>/dev/null
-./pqc/scotty/build/scotty keygen --alias alice --profile level2-25519 > /tmp/alice.tray
-./pqc/obi-wan/build/obi-wan sign   --tray /tmp/alice.tray --in-file /tmp/big.bin > /tmp/big.sig.yaml
-./pqc/obi-wan/build/obi-wan verify --tray /tmp/alice.tray --in-file /tmp/big.bin --in-sig /tmp/big.sig.yaml
+./pqc/hybrid/build/hybrid keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+./pqc/zorro/build/zorro sign   --tray /tmp/alice.tray --in-file /tmp/big.bin > /tmp/big.sig.yaml
+./pqc/zorro/build/zorro verify --tray /tmp/alice.tray --in-file /tmp/big.bin --in-sig /tmp/big.sig.yaml
 echo "exit: $?"
 ```
 Expected: exit 0.
@@ -757,7 +757,7 @@ Expected: exit 0.
 # 3 bytes — far too short for any real composite sig — triggering "composite sig too short".
 # Using "XXXX" (4 base64 chars = 3 decoded bytes) is reliable regardless of algorithm.
 sed 's/\(composite_sig: "\)[^"]*/\1XXXX/' /tmp/doc.sig.yaml > /tmp/doc.sig.corrupt.yaml
-./pqc/obi-wan/build/obi-wan verify \
+./pqc/zorro/build/zorro verify \
     --tray /tmp/alice.tray \
     --in-file /tmp/doc.txt \
     --in-sig /tmp/doc.sig.corrupt.yaml 2>&1
@@ -768,8 +768,8 @@ Expected: `Error: malformed composite sig: composite sig too short`; exit 2.
 - [ ] **Step 6: Confirm existing HYKE commands still work**
 
 ```bash
-./pqc/obi-wan/build/obi-wan encrypt+sign   --tray /tmp/alice.tray /tmp/doc.txt > /tmp/doc.hyke
-./pqc/obi-wan/build/obi-wan verify+decrypt --tray /tmp/alice.tray /tmp/doc.hyke | diff /tmp/doc.txt -
+./pqc/zorro/build/zorro encrypt+sign   --tray /tmp/alice.tray /tmp/doc.txt > /tmp/doc.hyke
+./pqc/zorro/build/zorro verify+decrypt --tray /tmp/alice.tray /tmp/doc.hyke | diff /tmp/doc.txt -
 echo "HYKE exit: $?"
 ```
 Expected: exit 0, no diff output.
@@ -777,7 +777,7 @@ Expected: exit 0, no diff output.
 - [ ] **Step 7: Confirm missing `--in-sig` on verify → exit 1**
 
 ```bash
-./pqc/obi-wan/build/obi-wan verify \
+./pqc/zorro/build/zorro verify \
     --tray /tmp/alice.tray \
     --in-file /tmp/doc.txt 2>&1
 echo "exit: $?"
@@ -787,7 +787,7 @@ Expected: `Error: --in-sig is required`; exit 1.
 - [ ] **Confirm `--in-sig` passed to `sign` is rejected → exit 1**
 
 ```bash
-./pqc/obi-wan/build/obi-wan sign \
+./pqc/zorro/build/zorro sign \
     --tray /tmp/alice.tray \
     --in-file /tmp/doc.txt \
     --in-sig /tmp/doc.sig.yaml 2>&1
@@ -798,8 +798,8 @@ Expected: `Error: unknown option '--in-sig'`; exit 1.
 - [ ] **Step 9: Confirm mceliece+slhdsa level1 (PQ-only) rejected**
 
 ```bash
-./pqc/scotty/build/scotty keygen --group mceliece+slhdsa --alias test --profile level1 > /tmp/mc1.tray
-./pqc/obi-wan/build/obi-wan sign --tray /tmp/mc1.tray --in-file /tmp/doc.txt 2>&1
+./pqc/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias test --profile level1 > /tmp/mc1.tray
+./pqc/zorro/build/zorro sign --tray /tmp/mc1.tray --in-file /tmp/doc.txt 2>&1
 echo "exit: $?"
 ```
 Expected: error about missing classical sig slot; exit 1.
@@ -807,6 +807,6 @@ Expected: error about missing classical sig slot; exit 1.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add pqc/obi-wan/src/main.cpp
+git add pqc/zorro/src/main.cpp
 git commit -m "verify hybrid sign/verify across all profile groups"
 ```

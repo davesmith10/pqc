@@ -1,8 +1,8 @@
-# scotty → libcrystals-1.1 Backend Migration Implementation Plan
+# hybrid → libcrystals-1.1 Backend Migration Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace scotty's ~20 private source files with a single `main.cpp` that calls `Crystals::crystals` (libcrystals-1.1), making scotty a thin CLI shell with no duplicated crypto or YAML logic.
+**Goal:** Replace hybrid's ~20 private source files with a single `main.cpp` that calls `Crystals::crystals` (libcrystals-1.1), making hybrid a thin CLI shell with no duplicated crypto or YAML logic.
 
 **Architecture:** `find_package(Crystals REQUIRED HINTS /usr/local/lib/cmake/crystals)` replaces all `add_subdirectory`, scrypt, and individual PQ link targets in CMakeLists.txt. `main.cpp` changes its three private `#include` lines to `#include <crystals/crystals.hpp>` and folds in `cmd_protect`/`cmd_unprotect` (pure CLI handlers) from the deleted `secure_tray.cpp`. All crypto and YAML logic lives entirely in the library.
 
@@ -14,21 +14,21 @@
 
 | File | Action | Responsibility after change |
 |------|--------|-----------------------------|
-| `pq/scotty/CMakeLists.txt` | **Rewrite** | find_package(Crystals) + thin executable |
-| `pq/scotty/src/main.cpp` | **Rewrite** | All scotty CLI: keygen, protect, unprotect, helpers |
-| `pq/scotty/src/base64.cpp` + `.hpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/ec_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/kyber_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/kyber_api.hpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/dilithium_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/dilithium_api.hpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/mceliece_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/slhdsa_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/mceliece_randombytes.c` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/tray.cpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/yaml_io.cpp` + `.hpp` | **Delete** | (in libcrystals) |
-| `pq/scotty/src/secure_tray.cpp` + `.hpp` | **Delete** | CLI parts fold into main.cpp; crypto in libcrystals |
-| `pq/scotty/src/symmetric.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/CMakeLists.txt` | **Rewrite** | find_package(Crystals) + thin executable |
+| `pq/hybrid/src/main.cpp` | **Rewrite** | All hybrid CLI: keygen, protect, unprotect, helpers |
+| `pq/hybrid/src/base64.cpp` + `.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/ec_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/kyber_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/kyber_api.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/dilithium_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/dilithium_api.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/mceliece_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/slhdsa_ops.cpp` + `.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/mceliece_randombytes.c` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/tray.cpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/yaml_io.cpp` + `.hpp` | **Delete** | (in libcrystals) |
+| `pq/hybrid/src/secure_tray.cpp` + `.hpp` | **Delete** | CLI parts fold into main.cpp; crypto in libcrystals |
+| `pq/hybrid/src/symmetric.hpp` | **Delete** | (in libcrystals) |
 
 ---
 
@@ -49,15 +49,15 @@ Expected: on branch `main`, working tree clean (or only untracked files).
 - [ ] **Step 2: Create the worktree**
 
 ```bash
-git worktree add ../scotty-libcrystals-wt -b scotty-libcrystals-backend
+git worktree add ../hybrid-libcrystals-wt -b hybrid-libcrystals-backend
 ```
 
-Expected: `Preparing worktree (new branch 'scotty-libcrystals-backend')` — no errors.
+Expected: `Preparing worktree (new branch 'hybrid-libcrystals-backend')` — no errors.
 
 - [ ] **Step 3: Confirm worktree is ready**
 
 ```bash
-ls ../scotty-libcrystals-wt/scotty/src/
+ls ../hybrid-libcrystals-wt/hybrid/src/
 ```
 
 Expected: the full list of ~20 source files is visible.
@@ -67,20 +67,20 @@ Expected: the full list of ~20 source files is visible.
 ## Task 2: Rewrite CMakeLists.txt
 
 **Files:**
-- Modify: `scotty/CMakeLists.txt` (in the worktree: `../scotty-libcrystals-wt/scotty/CMakeLists.txt`)
+- Modify: `hybrid/CMakeLists.txt` (in the worktree: `../hybrid-libcrystals-wt/hybrid/CMakeLists.txt`)
 
 All path references below assume you are working **inside the worktree**:
 ```bash
-cd /mnt/c/Users/daves/OneDrive/Desktop/Crystals/scotty-libcrystals-wt
+cd /mnt/c/Users/daves/OneDrive/Desktop/Crystals/hybrid-libcrystals-wt
 ```
 
 - [ ] **Step 1: Replace CMakeLists.txt entirely**
 
-Write this exact content to `scotty/CMakeLists.txt`:
+Write this exact content to `hybrid/CMakeLists.txt`:
 
 ```cmake
 cmake_minimum_required(VERSION 3.15)
-project(scotty LANGUAGES C CXX)
+project(hybrid LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -100,16 +100,16 @@ get_filename_component(_tbb_libdir "${_tbb_loc}" DIRECTORY)
 # requiring a prior ldconfig run (e.g. on a fresh session after install).
 set(CMAKE_BUILD_RPATH "${_tbb_libdir}" /usr/local/lib)
 
-add_executable(scotty src/main.cpp)
+add_executable(hybrid src/main.cpp)
 
-target_link_libraries(scotty PRIVATE
+target_link_libraries(hybrid PRIVATE
     Crystals::crystals
     OpenSSL::Crypto
 )
 
-target_compile_options(scotty PRIVATE -O2 -Wall -Wextra)
+target_compile_options(hybrid PRIVATE -O2 -Wall -Wextra)
 
-install(TARGETS scotty DESTINATION bin)
+install(TARGETS hybrid DESTINATION bin)
 ```
 
 Key things removed vs. the old file:
@@ -124,7 +124,7 @@ Key things removed vs. the old file:
 - [ ] **Step 2: Verify the file looks right**
 
 ```bash
-cat scotty/CMakeLists.txt
+cat hybrid/CMakeLists.txt
 ```
 
 Expected: ~30 lines total, no references to `add_subdirectory`, `SCRYPT`, `kyber`, `dilithium`, `mceliece.a`, `yaml-cpp`, or `BLAKE3` as top-level dependencies.
@@ -134,13 +134,13 @@ Expected: ~30 lines total, no references to `add_subdirectory`, `SCRYPT`, `kyber
 ## Task 3: Rewrite main.cpp
 
 **Files:**
-- Modify: `scotty/src/main.cpp`
+- Modify: `hybrid/src/main.cpp`
 
 The new `main.cpp` folds in the CLI-layer helper functions and `cmd_protect`/`cmd_unprotect` from the soon-to-be-deleted `secure_tray.cpp`. All crypto calls go through the library.
 
 - [ ] **Step 1: Replace main.cpp entirely**
 
-Write this exact content to `scotty/src/main.cpp`:
+Write this exact content to `hybrid/src/main.cpp`:
 
 ```cpp
 #include <crystals/crystals.hpp>
@@ -644,7 +644,7 @@ int main(int argc, char* argv[]) {
 - [ ] **Step 2: Count the lines to sanity-check**
 
 ```bash
-wc -l scotty/src/main.cpp
+wc -l hybrid/src/main.cpp
 ```
 
 Expected: ~640 lines. If dramatically different, recheck the write.
@@ -661,11 +661,11 @@ Do this from inside the worktree directory.
 - [ ] **Step 1: Wipe any stale build dir and configure fresh**
 
 ```bash
-rm -rf scotty/build
-cmake -S scotty -B scotty/build
+rm -rf hybrid/build
+cmake -S hybrid -B hybrid/build
 ```
 
-Expected: CMake configure output ends with `-- Build files have been written to: .../scotty/build`. You should see `found Crystals` or similar. You should NOT see errors about missing TBB, BLAKE3, kyber, or dilithium.
+Expected: CMake configure output ends with `-- Build files have been written to: .../hybrid/build`. You should see `found Crystals` or similar. You should NOT see errors about missing TBB, BLAKE3, kyber, or dilithium.
 
 If configure fails with "Could not find Crystals":
 - Verify libcrystals is installed: `ls /usr/local/lib/cmake/crystals/CrystalsConfig.cmake`
@@ -678,10 +678,10 @@ If configure fails with "Could not find Crystals":
 - [ ] **Step 2: Build**
 
 ```bash
-cmake --build scotty/build -j$(nproc)
+cmake --build hybrid/build -j$(nproc)
 ```
 
-Expected: Compiles only `main.cpp`. Should produce the binary at `scotty/build/scotty`.
+Expected: Compiles only `main.cpp`. Should produce the binary at `hybrid/build/hybrid`.
 No warnings about undefined references. No "implicit declaration" warnings.
 
 If you get `error: 'EVP_read_pw_string' undeclared`: add `#include <openssl/evp.h>` to main.cpp — some OpenSSL configurations put this function's declaration there rather than in `ui.h`.
@@ -689,7 +689,7 @@ If you get `error: 'EVP_read_pw_string' undeclared`: add `#include <openssl/evp.
 - [ ] **Step 3: Confirm binary exists**
 
 ```bash
-ls -lh scotty/build/scotty
+ls -lh hybrid/build/hybrid
 ```
 
 Expected: binary present, size in the MB range (libcrystals is statically linked).
@@ -704,7 +704,7 @@ Expected: binary present, size in the MB range (libcrystals is statically linked
 - [ ] **Step 1: Basic keygen smoke test**
 
 ```bash
-scotty/build/scotty keygen --alias smoketest --profile level2-25519
+hybrid/build/hybrid keygen --alias smoketest --profile level2-25519
 ```
 
 Expected: Valid YAML to stdout with `alias: smoketest`, 4 slots (X25519, Kyber512, Ed25519, Dilithium2).
@@ -712,10 +712,10 @@ Expected: Valid YAML to stdout with `alias: smoketest`, 4 slots (X25519, Kyber51
 - [ ] **Step 2: Protect / unprotect roundtrip smoke test**
 
 ```bash
-scotty/build/scotty keygen --alias smoketest --out /tmp/smoke.tray
+hybrid/build/hybrid keygen --alias smoketest --out /tmp/smoke.tray
 echo "smokepass99" > /tmp/smoke_pw.txt
-scotty/build/scotty protect --in /tmp/smoke.tray --out /tmp/smoke.sec.tray --password-file /tmp/smoke_pw.txt
-scotty/build/scotty unprotect --in /tmp/smoke.sec.tray --out /tmp/smoke.plain.tray --password-file /tmp/smoke_pw.txt
+hybrid/build/hybrid protect --in /tmp/smoke.tray --out /tmp/smoke.sec.tray --password-file /tmp/smoke_pw.txt
+hybrid/build/hybrid unprotect --in /tmp/smoke.sec.tray --out /tmp/smoke.plain.tray --password-file /tmp/smoke_pw.txt
 diff /tmp/smoke.tray /tmp/smoke.plain.tray
 ```
 
@@ -726,30 +726,30 @@ Expected: `diff` exits 0 (files identical).
 ## Task 6: Delete the 21 superseded source files
 
 **Files:**
-- Delete all 21 files listed below from `scotty/src/`
+- Delete all 21 files listed below from `hybrid/src/`
 
 - [ ] **Step 1: Delete all superseded files**
 
 ```bash
-rm scotty/src/base64.cpp scotty/src/base64.hpp \
-   scotty/src/ec_ops.cpp scotty/src/ec_ops.hpp \
-   scotty/src/kyber_ops.cpp scotty/src/kyber_ops.hpp \
-   scotty/src/kyber_api.hpp \
-   scotty/src/dilithium_ops.cpp scotty/src/dilithium_ops.hpp \
-   scotty/src/dilithium_api.hpp \
-   scotty/src/mceliece_ops.cpp scotty/src/mceliece_ops.hpp \
-   scotty/src/slhdsa_ops.cpp scotty/src/slhdsa_ops.hpp \
-   scotty/src/mceliece_randombytes.c \
-   scotty/src/tray.cpp \
-   scotty/src/yaml_io.cpp scotty/src/yaml_io.hpp \
-   scotty/src/secure_tray.cpp scotty/src/secure_tray.hpp \
-   scotty/src/symmetric.hpp
+rm hybrid/src/base64.cpp hybrid/src/base64.hpp \
+   hybrid/src/ec_ops.cpp hybrid/src/ec_ops.hpp \
+   hybrid/src/kyber_ops.cpp hybrid/src/kyber_ops.hpp \
+   hybrid/src/kyber_api.hpp \
+   hybrid/src/dilithium_ops.cpp hybrid/src/dilithium_ops.hpp \
+   hybrid/src/dilithium_api.hpp \
+   hybrid/src/mceliece_ops.cpp hybrid/src/mceliece_ops.hpp \
+   hybrid/src/slhdsa_ops.cpp hybrid/src/slhdsa_ops.hpp \
+   hybrid/src/mceliece_randombytes.c \
+   hybrid/src/tray.cpp \
+   hybrid/src/yaml_io.cpp hybrid/src/yaml_io.hpp \
+   hybrid/src/secure_tray.cpp hybrid/src/secure_tray.hpp \
+   hybrid/src/symmetric.hpp
 ```
 
 - [ ] **Step 2: Confirm only main.cpp remains**
 
 ```bash
-ls scotty/src/
+ls hybrid/src/
 ```
 
 Expected: only `main.cpp`.
@@ -757,7 +757,7 @@ Expected: only `main.cpp`.
 - [ ] **Step 3: Rebuild to confirm nothing was accidentally depended on**
 
 ```bash
-cmake --build scotty/build -j$(nproc)
+cmake --build hybrid/build -j$(nproc)
 ```
 
 Expected: clean build, same binary. (CMake will just relink since no .cpp changed.)
@@ -772,7 +772,7 @@ Expected: clean build, same binary. (CMake will just relink since no .cpp change
 - [ ] **Step 1: All 6 crystals profiles**
 
 ```bash
-SCOTTY=scotty/build/scotty
+SCOTTY=hybrid/build/hybrid
 $SCOTTY keygen --alias alice --profile level2-25519
 $SCOTTY keygen --alias alice --profile level0
 $SCOTTY keygen --alias alice --profile level1
@@ -829,7 +829,7 @@ $SCOTTY unprotect --in /tmp/alice.sec.tray --out /tmp/x.tray \
 - [ ] **Step 6: Verify binary has correct RPATH (no LD_LIBRARY_PATH needed)**
 
 ```bash
-ldd scotty/build/scotty | grep -E "tbb|XKCP|not found"
+ldd hybrid/build/hybrid | grep -E "tbb|XKCP|not found"
 ```
 
 Expected: `libtbb.so` resolves to a path (not "not found"). `libXKCP.so` resolves (likely via `/usr/local/lib`). No "not found" entries.
@@ -839,25 +839,25 @@ Expected: `libtbb.so` resolves to a path (not "not found"). `libXKCP.so` resolve
 ## Task 8: Commit
 
 **Files:**
-- All changes committed on `scotty-libcrystals-backend` branch
+- All changes committed on `hybrid-libcrystals-backend` branch
 
 - [ ] **Step 1: Stage all changes**
 
 ```bash
-git add scotty/CMakeLists.txt scotty/src/main.cpp
-git rm scotty/src/base64.cpp scotty/src/base64.hpp \
-       scotty/src/ec_ops.cpp scotty/src/ec_ops.hpp \
-       scotty/src/kyber_ops.cpp scotty/src/kyber_ops.hpp \
-       scotty/src/kyber_api.hpp \
-       scotty/src/dilithium_ops.cpp scotty/src/dilithium_ops.hpp \
-       scotty/src/dilithium_api.hpp \
-       scotty/src/mceliece_ops.cpp scotty/src/mceliece_ops.hpp \
-       scotty/src/slhdsa_ops.cpp scotty/src/slhdsa_ops.hpp \
-       scotty/src/mceliece_randombytes.c \
-       scotty/src/tray.cpp \
-       scotty/src/yaml_io.cpp scotty/src/yaml_io.hpp \
-       scotty/src/secure_tray.cpp scotty/src/secure_tray.hpp \
-       scotty/src/symmetric.hpp
+git add hybrid/CMakeLists.txt hybrid/src/main.cpp
+git rm hybrid/src/base64.cpp hybrid/src/base64.hpp \
+       hybrid/src/ec_ops.cpp hybrid/src/ec_ops.hpp \
+       hybrid/src/kyber_ops.cpp hybrid/src/kyber_ops.hpp \
+       hybrid/src/kyber_api.hpp \
+       hybrid/src/dilithium_ops.cpp hybrid/src/dilithium_ops.hpp \
+       hybrid/src/dilithium_api.hpp \
+       hybrid/src/mceliece_ops.cpp hybrid/src/mceliece_ops.hpp \
+       hybrid/src/slhdsa_ops.cpp hybrid/src/slhdsa_ops.hpp \
+       hybrid/src/mceliece_randombytes.c \
+       hybrid/src/tray.cpp \
+       hybrid/src/yaml_io.cpp hybrid/src/yaml_io.hpp \
+       hybrid/src/secure_tray.cpp hybrid/src/secure_tray.hpp \
+       hybrid/src/symmetric.hpp
 ```
 
 - [ ] **Step 2: Verify staged changes look right**
@@ -873,10 +873,10 @@ Expected: 2 files modified (`CMakeLists.txt`, `main.cpp`), 21 files deleted.
 
 ```bash
 git commit -m "$(cat <<'EOF'
-refactor(scotty): migrate to libcrystals-1.1 backend
+refactor(hybrid): migrate to libcrystals-1.1 backend
 
 Replace all private crypto, YAML I/O, and tray logic with calls to
-Crystals::crystals. scotty/src/ now contains only main.cpp. CMakeLists.txt
+Crystals::crystals. hybrid/src/ now contains only main.cpp. CMakeLists.txt
 is replaced by find_package(Crystals) + a single target_link_libraries call.
 
 21 source files deleted; cmd_protect/cmd_unprotect (pure CLI handlers) folded
@@ -895,8 +895,8 @@ ls /usr/local/lib/cmake/crystals/CrystalsConfig.cmake
 ls /usr/local/lib/libcrystals-1.1.a
 ```
 
-**All paths in Tasks 2–8 assume you are in the worktree root** (`scotty-libcrystals-wt/`), not the main `pq/` checkout.
+**All paths in Tasks 2–8 assume you are in the worktree root** (`hybrid-libcrystals-wt/`), not the main `pq/` checkout.
 
 **If the build fails with TBB not found:** This means `CrystalsConfig.cmake` couldn't locate TBB at its baked-in path. Run `cat /usr/local/lib/cmake/crystals/CrystalsConfig.cmake` and look for the TBB hint path — it should point to `Crystals/local/lib/cmake/TBB`. If that directory is missing, TBB needs to be rebuilt from source (see `Crystals/oneTBB`).
 
-**obi-wan will follow the same pattern** in a subsequent migration. The discipline going forward: all new crypto functionality goes into libcrystals-1.1 first, then is called from the application.
+**zorro will follow the same pattern** in a subsequent migration. The discipline going forward: all new crypto functionality goes into libcrystals-1.1 first, then is called from the application.

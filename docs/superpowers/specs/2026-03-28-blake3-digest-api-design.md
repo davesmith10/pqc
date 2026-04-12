@@ -9,7 +9,7 @@
 ## 1. Purpose
 
 Expose BLAKE3 hashing as a first-class public capability in `libcrystals-1.2` for use by
-downstream consumers (scotty, obi-wan, padme, and external code). BLAKE3 is already a build
+downstream consumers (hybrid, zorro, penelope, and external code). BLAKE3 is already a build
 dependency (used internally for tray UUID derivation), but currently exposes zero public surface.
 
 This spec covers plain hashing and keyed hashing. Key derivation mode is explicitly excluded —

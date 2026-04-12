@@ -4,7 +4,7 @@
 
 **Goal:** Add McEliece Level1–5 tray ID bytes to the HYKE wire format and a general `is_tray_complete()` helper, unblocking `encrypt+sign` / `verify+decrypt` for McEliece Level2–5 trays.
 
-**Architecture:** Two additive cases added to `tray_id_byte()` / `tray_type_from_id()` in `crystals.hpp` (IDs `0x31`–`0x35`); a new `is_tray_complete()` inline guards against PQ-only trays before HYKE operations in `obi-wan`. All crypto dispatch for McEliece KEM and SLH-DSA is already correct.
+**Architecture:** Two additive cases added to `tray_id_byte()` / `tray_type_from_id()` in `crystals.hpp` (IDs `0x31`–`0x35`); a new `is_tray_complete()` inline guards against PQ-only trays before HYKE operations in `zorro`. All crypto dispatch for McEliece KEM and SLH-DSA is already correct.
 
 **Tech Stack:** C++17, `crystals/crystals.hpp` (public API), `libcrystals-1.2` static library, CMake, OpenSSL.
 
@@ -16,7 +16,7 @@
 |------|--------|
 | `pqc/libcrystals-1.2/include/crystals/crystals.hpp` | Add 5 cases to `tray_id_byte()`, 5 cases to `tray_type_from_id()`, add `is_tray_complete()` inline |
 | `pqc/libcrystals-1.2/test/api_stability_test-1.2.cpp` | Add static_assert for `is_tray_complete` signature + runtime assertions in `main()` |
-| `pqc/obi-wan/src/main.cpp` | Add `is_tray_complete()` guard in `cmd_encrypt_sign` (~line 437) and `cmd_verify_decrypt` (~line 605) |
+| `pqc/zorro/src/main.cpp` | Add `is_tray_complete()` guard in `cmd_encrypt_sign` (~line 437) and `cmd_verify_decrypt` (~line 605) |
 | `pqc/CLAUDE.md` | Add McEliece HYKE entries to verified-working section |
 
 All commands run from: `/mnt/c/Users/daves/OneDrive/Desktop/Crystals/`
@@ -186,7 +186,7 @@ cmake --build pqc/libcrystals-1.2/build -j$(nproc) --target api_stability_test_1
 
 Expected: `exit: 0`
 
-- [ ] **Step 5: Install libcrystals so obi-wan picks up the changes**
+- [ ] **Step 5: Install libcrystals so zorro picks up the changes**
 
 ```bash
 sudo bash pqc/libcrystals-1.2/install.sh
@@ -204,15 +204,15 @@ git -C pqc commit -m "feat: add is_tray_complete() helper (@api-stable v1.2)"
 
 ---
 
-## Task 3: Add `is_tray_complete()` guard in obi-wan
+## Task 3: Add `is_tray_complete()` guard in zorro
 
 **Files:**
-- Modify: `pqc/obi-wan/src/main.cpp:420-444` (cmd_encrypt_sign)
-- Modify: `pqc/obi-wan/src/main.cpp:588-612` (cmd_verify_decrypt)
+- Modify: `pqc/zorro/src/main.cpp:420-444` (cmd_encrypt_sign)
+- Modify: `pqc/zorro/src/main.cpp:588-612` (cmd_verify_decrypt)
 
 - [ ] **Step 1: Add guard to `cmd_encrypt_sign`**
 
-In `pqc/obi-wan/src/main.cpp`, after the tray-loading try/catch block in `cmd_encrypt_sign` (after `return 3;` at ~line 429, before `const Slot* cl_kem` at ~line 432), insert:
+In `pqc/zorro/src/main.cpp`, after the tray-loading try/catch block in `cmd_encrypt_sign` (after `return 3;` at ~line 429, before `const Slot* cl_kem` at ~line 432), insert:
 
 ```cpp
     if (!is_tray_complete(tray.tray_type)) {
@@ -238,11 +238,11 @@ Same insertion in `cmd_verify_decrypt` after the tray-loading try/catch block (a
     }
 ```
 
-- [ ] **Step 3: Rebuild obi-wan**
+- [ ] **Step 3: Rebuild zorro**
 
 ```bash
-cmake -S pqc/obi-wan -B pqc/obi-wan/build 2>/dev/null
-cmake --build pqc/obi-wan/build -j$(nproc) 2>&1 | tail -5
+cmake -S pqc/zorro -B pqc/zorro/build 2>/dev/null
+cmake --build pqc/zorro/build -j$(nproc) 2>&1 | tail -5
 ```
 
 Expected: build succeeds with no errors.
@@ -250,10 +250,10 @@ Expected: build succeeds with no errors.
 - [ ] **Step 4: Test McEliece Level1 partial-tray rejection**
 
 ```bash
-./pqc/scotty/build/scotty keygen --group mceliece+slhdsa --alias ms1 \
+./pqc/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias ms1 \
   --profile level1 --out /tmp/ms1.tray
 echo "hello" > /tmp/plain.txt
-./pqc/obi-wan/build/obi-wan encrypt+sign --tray /tmp/ms1.tray /tmp/plain.txt
+./pqc/zorro/build/zorro encrypt+sign --tray /tmp/ms1.tray /tmp/plain.txt
 echo "exit: $?"
 ```
 
@@ -262,11 +262,11 @@ Expected: stderr contains `mceliece+slhdsa level1 is a partial tray and cannot b
 - [ ] **Step 5: Test McEliece Level2 encrypt+sign / verify+decrypt roundtrip**
 
 ```bash
-./pqc/scotty/build/scotty keygen --group mceliece+slhdsa --alias ms2 \
+./pqc/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias ms2 \
   --profile level2 --out /tmp/ms2.tray
-./pqc/obi-wan/build/obi-wan encrypt+sign --tray /tmp/ms2.tray /tmp/plain.txt \
+./pqc/zorro/build/zorro encrypt+sign --tray /tmp/ms2.tray /tmp/plain.txt \
   > /tmp/ms2.hyke
-./pqc/obi-wan/build/obi-wan verify+decrypt --tray /tmp/ms2.tray /tmp/ms2.hyke \
+./pqc/zorro/build/zorro verify+decrypt --tray /tmp/ms2.tray /tmp/ms2.hyke \
   | diff /tmp/plain.txt -
 echo "exit: $?"
 ```
@@ -276,11 +276,11 @@ Expected: no diff output, exit code `0`.
 - [ ] **Step 6: Test McEliece Level5 roundtrip (largest key — confirms large CT handling)**
 
 ```bash
-./pqc/scotty/build/scotty keygen --group mceliece+slhdsa --alias ms5 \
+./pqc/hybrid/build/hybrid keygen --group mceliece+slhdsa --alias ms5 \
   --profile level5 --out /tmp/ms5.tray
-./pqc/obi-wan/build/obi-wan encrypt+sign --tray /tmp/ms5.tray /tmp/plain.txt \
+./pqc/zorro/build/zorro encrypt+sign --tray /tmp/ms5.tray /tmp/plain.txt \
   > /tmp/ms5.hyke
-./pqc/obi-wan/build/obi-wan verify+decrypt --tray /tmp/ms5.tray /tmp/ms5.hyke \
+./pqc/zorro/build/zorro verify+decrypt --tray /tmp/ms5.tray /tmp/ms5.hyke \
   | diff /tmp/plain.txt -
 echo "exit: $?"
 ```
@@ -290,7 +290,7 @@ Expected: no diff output, exit code `0`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git -C pqc add obi-wan/src/main.cpp
+git -C pqc add zorro/src/main.cpp
 git -C pqc commit -m "feat: guard HYKE commands against partial trays; unblock McEliece HYKE"
 ```
 
@@ -303,7 +303,7 @@ git -C pqc commit -m "feat: guard HYKE commands against partial trays; unblock M
 
 - [ ] **Step 1: Add McEliece HYKE entries to verified-working**
 
-In `pqc/CLAUDE.md`, find the `## Verified Working (obi-wan)` section and append:
+In `pqc/CLAUDE.md`, find the `## Verified Working (zorro)` section and append:
 
 ```
 - McEliece encrypt+sign/verify+decrypt: level2, level3, level4, level5 roundtrip OK (2026-04-05)

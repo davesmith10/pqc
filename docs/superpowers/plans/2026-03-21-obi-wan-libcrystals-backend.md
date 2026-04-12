@@ -1,10 +1,10 @@
-# obi-wan libcrystals-1.1 Backend Migration Implementation Plan
+# zorro libcrystals-1.1 Backend Migration Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace obi-wan's ~29 local source files with a single `src/main.cpp` that delegates all crypto, wire-format, and I/O to `Crystals::crystals` (libcrystals-1.1), following the same pattern established by the scotty migration.
+**Goal:** Replace zorro's ~29 local source files with a single `src/main.cpp` that delegates all crypto, wire-format, and I/O to `Crystals::crystals` (libcrystals-1.1), following the same pattern established by the hybrid migration.
 
-**Architecture:** After migration obi-wan's `src/` contains only `main.cpp`. The binary links `Crystals::crystals` (fat static archive at `/usr/local/lib/libcrystals-1.1.a`) plus `OpenSSL::Crypto` directly (for `openssl/rand.h` → `RAND_bytes` in `cmd_sign`). All crypto, KDF, symmetric, wire-format, tray-loading, password commands, and token commands come from the library.
+**Architecture:** After migration zorro's `src/` contains only `main.cpp`. The binary links `Crystals::crystals` (fat static archive at `/usr/local/lib/libcrystals-1.1.a`) plus `OpenSSL::Crypto` directly (for `openssl/rand.h` → `RAND_bytes` in `cmd_sign`). All crypto, KDF, symmetric, wire-format, tray-loading, password commands, and token commands come from the library.
 
 **Tech Stack:** C++17, CMake, `Crystals::crystals` (libcrystals-1.1 installed at `/usr/local`), OpenSSL 3.
 
@@ -12,9 +12,9 @@
 
 ## API Status — No Gap
 
-Every function currently called from `obi-wan/src/` is already declared `@api-stable v1.0` (or `@api-candidate-1.1`) in `crystals/crystals.hpp`. No libcrystals patch is needed before beginning.
+Every function currently called from `zorro/src/` is already declared `@api-stable v1.0` (or `@api-candidate-1.1`) in `crystals/crystals.hpp`. No libcrystals patch is needed before beginning.
 
-| obi-wan file | Provided by library as |
+| zorro file | Provided by library as |
 |---|---|
 | `tray_reader.{hpp,cpp}` → `load_tray(path)` | `load_tray(path)` — `@api-stable v1.0` |
 | `ec_kem.{hpp,cpp}` | `ec_kem::is_classical_kem`, `ec_kem::encaps`, `ec_kem::decaps` |
@@ -38,9 +38,9 @@ Every function currently called from `obi-wan/src/` is already declared `@api-st
 
 ## ⚠️ Wire Format Note — Token Protocol Change
 
-The library's `Token` struct adds a `token_uuid` field (TLV tag `0x06`) not present in the current obi-wan implementation. The library's `cmd_gentok` correctly populates this field with a random UUID v4 (verified in `libcrystals-1.1/src/token_cmd.cpp` lines 95–100). The library's `token_unpack` requires all 6 TLV tags — an old token presented to `valtok` will fail with "missing mandatory tag 0x06" (exit 2). **Tokens generated before this migration will not verify after migration.** This is acceptable since gentok/valtok is a development-internal protocol, but it must be tested explicitly.
+The library's `Token` struct adds a `token_uuid` field (TLV tag `0x06`) not present in the current zorro implementation. The library's `cmd_gentok` correctly populates this field with a random UUID v4 (verified in `libcrystals-1.1/src/token_cmd.cpp` lines 95–100). The library's `token_unpack` requires all 6 TLV tags — an old token presented to `valtok` will fail with "missing mandatory tag 0x06" (exit 2). **Tokens generated before this migration will not verify after migration.** This is acceptable since gentok/valtok is a development-internal protocol, but it must be tested explicitly.
 
-Additionally, the library's `cmd_gentok` and `cmd_valtok` use `std::exit` for all error paths, which is consistent with the existing behaviour in `obi-wan/src/token_cmd.cpp`. The library's `cmd_valtok` no longer enforces the `Level2`-only tray restriction (it looks for any ECDSA P-256 slot), which is a minor relaxation of the previous check.
+Additionally, the library's `cmd_gentok` and `cmd_valtok` use `std::exit` for all error paths, which is consistent with the existing behaviour in `zorro/src/token_cmd.cpp`. The library's `cmd_valtok` no longer enforces the `Level2`-only tray restriction (it looks for any ECDSA P-256 slot), which is a minor relaxation of the previous check.
 
 ---
 
@@ -48,11 +48,11 @@ Additionally, the library's `cmd_gentok` and `cmd_valtok` use `std::exit` for al
 
 | Location | Change |
 |---|---|
-| `pq/obi-wan/CMakeLists.txt` | Rewrite — `find_package(Crystals)` replaces all manual deps |
-| `pq/obi-wan/src/main.cpp` | Update — replace all local `#include "..."` with `#include <crystals/crystals.hpp>`; remove forward decls for `cmd_gentok`/`cmd_valtok`/`cmd_pwencrypt`/`cmd_pwdecrypt` |
-| `pq/obi-wan/src/` (29 files) | Delete all files except `main.cpp` |
+| `pq/zorro/CMakeLists.txt` | Rewrite — `find_package(Crystals)` replaces all manual deps |
+| `pq/zorro/src/main.cpp` | Update — replace all local `#include "..."` with `#include <crystals/crystals.hpp>`; remove forward decls for `cmd_gentok`/`cmd_valtok`/`cmd_pwencrypt`/`cmd_pwdecrypt` |
+| `pq/zorro/src/` (29 files) | Delete all files except `main.cpp` |
 
-**29 files to delete from `pq/obi-wan/src/`:**
+**29 files to delete from `pq/zorro/src/`:**
 `armor.cpp`, `armor.hpp`, `base64.cpp`, `base64.hpp`, `dilithium_api.hpp`, `dilithium_sig.cpp`, `dilithium_sig.hpp`, `ec_kem.cpp`, `ec_kem.hpp`, `ec_sig.cpp`, `ec_sig.hpp`, `hyke_format.hpp`, `kdf.hpp`, `kyber_api.hpp`, `kyber_kem.cpp`, `kyber_kem.hpp`, `mceliece_kem.cpp`, `mceliece_kem.hpp`, `mceliece_randombytes.c`, `pw_crypt.cpp`, `pw_crypt.hpp`, `pw_format.hpp`, `slhdsa_sig.cpp`, `slhdsa_sig.hpp`, `symmetric.hpp`, `token_cmd.cpp`, `token_format.hpp`, `tray_reader.cpp`, `tray_reader.hpp`
 
 ---
@@ -60,15 +60,15 @@ Additionally, the library's `cmd_gentok` and `cmd_valtok` use `std::exit` for al
 ## Task 1: Rewrite CMakeLists.txt
 
 **Files:**
-- Modify: `pq/obi-wan/CMakeLists.txt`
+- Modify: `pq/zorro/CMakeLists.txt`
 
 - [ ] **Step 1: Replace CMakeLists.txt**
 
-The new file is 30 lines, mirroring scotty's CMakeLists.txt exactly. No `add_subdirectory`, no scrypt, no XKCP path, no msgpack, no PQ archive targets.
+The new file is 30 lines, mirroring hybrid's CMakeLists.txt exactly. No `add_subdirectory`, no scrypt, no XKCP path, no msgpack, no PQ archive targets.
 
 ```cmake
 cmake_minimum_required(VERSION 3.16)
-project(obi-wan LANGUAGES C CXX)
+project(zorro LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -88,24 +88,24 @@ endif()
 get_filename_component(_tbb_libdir "${_tbb_loc}" DIRECTORY)
 set(CMAKE_BUILD_RPATH "${_tbb_libdir}" /usr/local/lib)
 
-add_executable(obi-wan src/main.cpp)
+add_executable(zorro src/main.cpp)
 
-target_link_libraries(obi-wan PRIVATE
+target_link_libraries(zorro PRIVATE
     Crystals::crystals
     OpenSSL::Crypto
 )
 
-target_compile_options(obi-wan PRIVATE -O2 -Wall -Wextra)
+target_compile_options(zorro PRIVATE -O2 -Wall -Wextra)
 
-install(TARGETS obi-wan DESTINATION bin)
+install(TARGETS zorro DESTINATION bin)
 ```
 
 - [ ] **Step 2: Verify CMake configures without errors**
 
 ```bash
 cd /mnt/c/Users/daves/OneDrive/Desktop/Crystals
-rm -rf pq/obi-wan/build
-cmake -S pq/obi-wan -B pq/obi-wan/build
+rm -rf pq/zorro/build
+cmake -S pq/zorro -B pq/zorro/build
 ```
 
 Expected: `-- Configuring done` with no errors. It will fail to compile because `main.cpp` still has the old includes, but configuration must succeed.
@@ -115,7 +115,7 @@ Expected: `-- Configuring done` with no errors. It will fail to compile because 
 ## Task 2: Update main.cpp includes and forward declarations
 
 **Files:**
-- Modify: `pq/obi-wan/src/main.cpp`
+- Modify: `pq/zorro/src/main.cpp`
 
 The only changes to `main.cpp` are at the top (includes + forward declarations). The body of every `cmd_encrypt`, `cmd_decrypt`, `cmd_sign`, `cmd_verify`, and `main()` is unchanged — all the function calls they make are identically named in the library.
 
@@ -153,16 +153,16 @@ The `cmd_pwencrypt` / `cmd_pwdecrypt` are called via `pw_crypt.hpp` which is imp
 - [ ] **Step 3: Build and confirm it compiles**
 
 ```bash
-cmake --build pq/obi-wan/build -j$(nproc)
+cmake --build pq/zorro/build -j$(nproc)
 ```
 
-Expected: clean build, binary at `pq/obi-wan/build/obi-wan`. There will likely be warnings about unused parameters or similar — these are acceptable (the `-Wall -Wextra` flags were already there). Fix any errors but do not fix warnings in unchanged code.
+Expected: clean build, binary at `pq/zorro/build/zorro`. There will likely be warnings about unused parameters or similar — these are acceptable (the `-Wall -Wextra` flags were already there). Fix any errors but do not fix warnings in unchanged code.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add pq/obi-wan/CMakeLists.txt pq/obi-wan/src/main.cpp
-git commit -m "build(obi-wan): switch to Crystals::crystals backend"
+git add pq/zorro/CMakeLists.txt pq/zorro/src/main.cpp
+git commit -m "build(zorro): switch to Crystals::crystals backend"
 ```
 
 ---
@@ -170,12 +170,12 @@ git commit -m "build(obi-wan): switch to Crystals::crystals backend"
 ## Task 3: Delete the now-redundant source files
 
 **Files:**
-- Delete: all 29 files listed above from `pq/obi-wan/src/`
+- Delete: all 29 files listed above from `pq/zorro/src/`
 
 - [ ] **Step 1: Delete the files**
 
 ```bash
-cd /mnt/c/Users/daves/OneDrive/Desktop/Crystals/pq/obi-wan/src
+cd /mnt/c/Users/daves/OneDrive/Desktop/Crystals/pq/zorro/src
 git rm armor.cpp armor.hpp \
        base64.cpp base64.hpp \
        dilithium_api.hpp dilithium_sig.cpp dilithium_sig.hpp \
@@ -194,35 +194,35 @@ git rm armor.cpp armor.hpp \
 
 ```bash
 cd /mnt/c/Users/daves/OneDrive/Desktop/Crystals
-rm -rf pq/obi-wan/build
-cmake -S pq/obi-wan -B pq/obi-wan/build
-cmake --build pq/obi-wan/build -j$(nproc)
+rm -rf pq/zorro/build
+cmake -S pq/zorro -B pq/zorro/build
+cmake --build pq/zorro/build -j$(nproc)
 ```
 
-Expected: clean build, binary at `pq/obi-wan/build/obi-wan`.
+Expected: clean build, binary at `pq/zorro/build/zorro`.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add -u pq/obi-wan/src/
-git commit -m "refactor(obi-wan): delete source files superseded by Crystals::crystals"
+git add -u pq/zorro/src/
+git commit -m "refactor(zorro): delete source files superseded by Crystals::crystals"
 ```
 
 ---
 
 ## Task 4: Verification
 
-Run all obi-wan functional tests from CLAUDE.md. All must pass before the migration is considered complete.
+Run all zorro functional tests from CLAUDE.md. All must pass before the migration is considered complete.
 
 - [ ] **Step 1: Keygen setup**
 
 ```bash
-OBI=./pq/obi-wan/build/obi-wan
-SCOTTY=./pq/scotty/build/scotty
-$SCOTTY keygen --alias alice --profile level2-25519 > /tmp/alice.tray
-$SCOTTY keygen --alias bob   --profile level2       > /tmp/bob.tray
-$SCOTTY keygen --alias carol --profile level3       > /tmp/carol.tray
-$SCOTTY keygen --alias dave  --profile level5       > /tmp/dave.tray
+ZORRO=./pq/zorro/build/zorro
+HYBRID=./pq/hybrid/build/hybrid
+$HYBRID keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+$HYBRID keygen --alias bob   --profile level2       > /tmp/bob.tray
+$HYBRID keygen --alias carol --profile level3       > /tmp/carol.tray
+$HYBRID keygen --alias dave  --profile level5       > /tmp/dave.tray
 echo "hello world" > /tmp/plain.txt
 ```
 
@@ -232,8 +232,8 @@ echo "hello world" > /tmp/plain.txt
 for TRAY in /tmp/alice.tray /tmp/bob.tray /tmp/carol.tray /tmp/dave.tray; do
   for KDF in SHAKE KMAC; do
     for CIPHER in AES-256-GCM ChaCha20; do
-      $OBI encrypt --tray $TRAY --kdf $KDF --cipher $CIPHER /tmp/plain.txt > /tmp/out.armored
-      $OBI decrypt --tray $TRAY /tmp/out.armored | diff /tmp/plain.txt -
+      $ZORRO encrypt --tray $TRAY --kdf $KDF --cipher $CIPHER /tmp/plain.txt > /tmp/out.armored
+      $ZORRO decrypt --tray $TRAY /tmp/out.armored | diff /tmp/plain.txt -
       echo "OK: $TRAY $KDF $CIPHER"
     done
   done
@@ -246,8 +246,8 @@ Expected: 16 lines of `OK: ...`
 
 ```bash
 for TRAY in /tmp/alice.tray /tmp/bob.tray /tmp/carol.tray /tmp/dave.tray; do
-  $OBI sign   --tray $TRAY /tmp/plain.txt > /tmp/out.hyke
-  $OBI verify --tray $TRAY /tmp/out.hyke | diff /tmp/plain.txt -
+  $ZORRO encrypt+sign   --tray $TRAY /tmp/plain.txt > /tmp/out.hyke
+  $ZORRO verify+decrypt --tray $TRAY /tmp/out.hyke | diff /tmp/plain.txt -
   echo "OK sign/verify: $TRAY"
 done
 ```
@@ -258,8 +258,8 @@ Expected: 4 lines of `OK sign/verify: ...`
 
 ```bash
 for LVL in 512 768 1024; do
-  $OBI pwencrypt --level $LVL /tmp/plain.txt /tmp/pw.enc
-  $OBI pwdecrypt /tmp/pw.enc /tmp/pw.dec
+  $ZORRO pwencrypt --level $LVL /tmp/plain.txt /tmp/pw.enc
+  $ZORRO pwdecrypt /tmp/pw.enc /tmp/pw.dec
   diff /tmp/plain.txt /tmp/pw.dec
   echo "OK pwencrypt/pwdecrypt level $LVL"
 done
@@ -269,7 +269,7 @@ Expected: 3 lines of `OK pwencrypt/pwdecrypt level ...`
 
 - [ ] **Step 5: msgpack tray auto-detection**
 
-The library's `load_tray` auto-detect path (YAML vs msgpack) is the same code as in `pq/scotty` which was already verified in the scotty migration. To confirm it works end-to-end, produce a msgpack tray via the `tray_mp::pack_to_file` API using the standalone msgpack test build, then encrypt with it.
+The library's `load_tray` auto-detect path (YAML vs msgpack) is the same code as in `pq/hybrid` which was already verified in the hybrid migration. To confirm it works end-to-end, produce a msgpack tray via the `tray_mp::pack_to_file` API using the standalone msgpack test build, then encrypt with it.
 
 ```bash
 # Build msgpack tools (if not already built)
@@ -292,19 +292,19 @@ g++ -std=c++17 -I/usr/local/include /tmp/yaml2mp.cpp \
     -Wl,-rpath,/usr/local/lib -o /tmp/yaml2mp
 
 /tmp/yaml2mp /tmp/alice.tray /tmp/alice.mp.tray
-$OBI encrypt --tray /tmp/alice.mp.tray /tmp/plain.txt > /tmp/out.armored
-$OBI decrypt --tray /tmp/alice.mp.tray /tmp/out.armored | diff /tmp/plain.txt -
+$ZORRO encrypt --tray /tmp/alice.mp.tray /tmp/plain.txt > /tmp/out.armored
+$ZORRO decrypt --tray /tmp/alice.mp.tray /tmp/out.armored | diff /tmp/plain.txt -
 echo "OK msgpack tray auto-detect"
 ```
 
-**Note:** If linking the one-liner is awkward, skip this step — `load_tray` msgpack support comes from `tray_mp::unpack_from_file` in the same library that was validated during the scotty migration. This step can also be done by calling `tray_mp::pack_to_file` from a small dedicated test rather than a one-liner.
+**Note:** If linking the one-liner is awkward, skip this step — `load_tray` msgpack support comes from `tray_mp::unpack_from_file` in the same library that was validated during the hybrid migration. This step can also be done by calling `tray_mp::pack_to_file` from a small dedicated test rather than a one-liner.
 
 - [ ] **Step 6: gentok / valtok roundtrip**
 
 ```bash
-$SCOTTY keygen --alias tok --profile level2 > /tmp/tok.tray
-$OBI gentok --tray /tmp/tok.tray --data "hello-token" --ttl 3600 > /tmp/tok.armored
-$OBI valtok --tray /tmp/tok.tray /tmp/tok.armored
+$HYBRID keygen --alias tok --profile level2 > /tmp/tok.tray
+$ZORRO gentok --tray /tmp/tok.tray --data "hello-token" --ttl 3600 > /tmp/tok.armored
+$ZORRO valtok --tray /tmp/tok.tray /tmp/tok.armored
 echo "OK gentok/valtok"
 ```
 
@@ -314,12 +314,12 @@ Expected: prints `hello-token` (no newline), exit 0.
 
 ```bash
 # Missing --tray
-$OBI encrypt /tmp/plain.txt 2>&1; echo "exit $?"
+$ZORRO encrypt /tmp/plain.txt 2>&1; echo "exit $?"
 # Expected: exit 1
 
 # Tampered HYKE payload
-$SCOTTY keygen --alias alice --profile level2-25519 > /tmp/alice.tray
-$OBI sign --tray /tmp/alice.tray /tmp/plain.txt > /tmp/out.hyke
+$HYBRID keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+$ZORRO encrypt+sign --tray /tmp/alice.tray /tmp/plain.txt > /tmp/out.hyke
 python3 -c "
 data = open('/tmp/out.hyke','rb').read()
 # flip a byte near the end (in the payload)
@@ -327,19 +327,19 @@ lst = bytearray(data)
 lst[-10] ^= 0xFF
 open('/tmp/tampered.hyke','wb').write(lst)
 "
-$OBI verify --tray /tmp/alice.tray /tmp/tampered.hyke 2>&1; echo "exit $?"
+$ZORRO verify+decrypt --tray /tmp/alice.tray /tmp/tampered.hyke 2>&1; echo "exit $?"
 # Expected: "signature INVALID" + exit 2
 
 # Wrong tray type
-$SCOTTY keygen --alias bob --profile level3 > /tmp/bob.tray
-$OBI verify --tray /tmp/bob.tray /tmp/out.hyke 2>&1; echo "exit $?"
+$HYBRID keygen --alias bob --profile level3 > /tmp/bob.tray
+$ZORRO verify+decrypt --tray /tmp/bob.tray /tmp/out.hyke 2>&1; echo "exit $?"
 # Expected: "tray type mismatch" + exit 2
 ```
 
 - [ ] **Step 8: Commit verification**
 
 ```bash
-git commit -m "test(obi-wan): verify all commands pass after libcrystals-1.1 migration" --allow-empty
+git commit -m "test(zorro): verify all commands pass after libcrystals-1.1 migration" --allow-empty
 ```
 
 (Use `--allow-empty` only if no files changed in this step; otherwise commit any updated test scripts.)
@@ -348,7 +348,7 @@ git commit -m "test(obi-wan): verify all commands pass after libcrystals-1.1 mig
 
 ## Non-Goals
 
-- No changes to obi-wan's CLI interface, exit codes, or wire formats (OBIWAN, HYKE, PWENC)
+- No changes to zorro's CLI interface, exit codes, or wire formats (ZORRO, HYKE, PWENC)
 - No changes to libcrystals-1.1's `@api-stable` declarations
-- No changes to scotty or any other tool
+- No changes to hybrid or any other tool
 - Backward compatibility for pre-migration `gentok` tokens is explicitly NOT a goal (token_uuid addition is accepted)

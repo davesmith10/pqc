@@ -345,8 +345,8 @@ Expected: installs fat archive and headers to `/usr/local`. Should complete with
 
 ```bash
 cd /mnt/c/Users/daves/OneDrive/Desktop/Crystals
-cmake --build pqc/scotty/build -j$(nproc)
-cmake --build pqc/obi-wan/build -j$(nproc)
+cmake --build pqc/hybrid/build -j$(nproc)
+cmake --build pqc/zorro/build -j$(nproc)
 ```
 
 Expected: both build cleanly. These tools consume `Crystals::crystals` and must not be

@@ -1,14 +1,14 @@
-# obi-wan + padme libcrystals-1.2 Update Plan
+# zorro + penelope libcrystals-1.2 Update Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add mlkem+mldsa and frodokem+falcon profile group support to obi-wan (encrypt/decrypt/sign/verify) and padme (tray-encaps/tray-decaps), and fix padme's broken CMakeLists.txt to use installed libcrystals-1.2.
+**Goal:** Add mlkem+mldsa and frodokem+falcon profile group support to zorro (encrypt/decrypt/sign/verify) and penelope (tray-encaps/tray-decaps), and fix penelope's broken CMakeLists.txt to use installed libcrystals-1.2.
 
-**Architecture:** Two-phase: (1) add `oqs_kem::is_oqs_kem()` helper + new tray_id bytes to the library and reinstall; (2) update dispatch logic in obi-wan and padme to branch on the new helper. padme also needs its broken direct-source-include CMake replaced with `find_package(Crystals REQUIRED)`.
+**Architecture:** Two-phase: (1) add `oqs_kem::is_oqs_kem()` helper + new tray_id bytes to the library and reinstall; (2) update dispatch logic in zorro and penelope to branch on the new helper. penelope also needs its broken direct-source-include CMake replaced with `find_package(Crystals REQUIRED)`.
 
-**Tech Stack:** C++17, libcrystals-1.2 (fat static archive at `/usr/local/lib/libcrystals-1.2.a`), CMake, OpenSSL, liboqs (ML-KEM/ML-DSA/FrodoKEM/Falcon via `oqs_kem::` and `oqs_sig::` namespaces), lodepng (padme only).
+**Tech Stack:** C++17, libcrystals-1.2 (fat static archive at `/usr/local/lib/libcrystals-1.2.a`), CMake, OpenSSL, liboqs (ML-KEM/ML-DSA/FrodoKEM/Falcon via `oqs_kem::` and `oqs_sig::` namespaces), lodepng (penelope only).
 
-**Branch:** `obi-wan-padme-1.2` in `worktrees/pq/`
+**Branch:** `zorro-penelope-1.2` in `worktrees/pq/`
 
 **Spec:** `additional-profile-groups-part2.txt`
 
@@ -23,9 +23,9 @@
 | `pq/libcrystals-1.2/include/crystals/crystals.hpp` | Add `oqs_kem::is_oqs_kem()` declaration; add 8 cases to `tray_id_byte()` and `tray_type_from_id()` |
 | `pq/libcrystals-1.2/src/oqs_ops.cpp` | Add `oqs_kem::is_oqs_kem()` implementation |
 | `pq/libcrystals-1.2/install.sh` | No change needed — same install process |
-| `pq/obi-wan/src/main.cpp` | 6 dispatch points updated (find_pq_slot, find_pq_sig_slot, 4× KEM/sig dispatch) |
-| `pq/padme/CMakeLists.txt` | Replace broken direct-source-include with `find_package(Crystals REQUIRED)` |
-| `pq/padme/src/main.cpp` | `is_pq_slot()`, `PROFILES`, TrayType mapping in decaps, `hyke_level_str()` |
+| `pq/zorro/src/main.cpp` | 6 dispatch points updated (find_pq_slot, find_pq_sig_slot, 4× KEM/sig dispatch) |
+| `pq/penelope/CMakeLists.txt` | Replace broken direct-source-include with `find_package(Crystals REQUIRED)` |
+| `pq/penelope/src/main.cpp` | `is_pq_slot()`, `PROFILES`, TrayType mapping in decaps, `hyke_level_str()` |
 | `CLAUDE.md` | Update references from libcrystals-1.1 to 1.2; add new profile groups |
 
 ---
@@ -214,10 +214,10 @@ git -C pq commit -m "feat(libcrystals-1.2): add oqs_kem::is_oqs_kem(), extend tr
 
 ---
 
-## Task 5: Update obi-wan Slot Detection
+## Task 5: Update zorro Slot Detection
 
 **Files:**
-- Modify: `pq/obi-wan/src/main.cpp:73-98`
+- Modify: `pq/zorro/src/main.cpp:73-98`
 
 The two slot-finder functions need to recognize OQS algorithms.
 
@@ -257,10 +257,10 @@ static const Slot* find_pq_sig_slot(const Tray& tray) {
 
 ---
 
-## Task 6: Update obi-wan PQ KEM Dispatch (encrypt + decrypt + sign + verify)
+## Task 6: Update zorro PQ KEM Dispatch (encrypt + decrypt + sign + verify)
 
 **Files:**
-- Modify: `pq/obi-wan/src/main.cpp` — 4 dispatch sites
+- Modify: `pq/zorro/src/main.cpp` — 4 dispatch sites
 
 The pattern to find and update (appears at lines ~145, ~247, ~335, ~565):
 ```cpp
@@ -361,10 +361,10 @@ With:
 
 ---
 
-## Task 7: Update obi-wan PQ Signature Dispatch (sign + verify)
+## Task 7: Update zorro PQ Signature Dispatch (sign + verify)
 
 **Files:**
-- Modify: `pq/obi-wan/src/main.cpp` — 3 dispatch sites in cmd_sign and cmd_verify
+- Modify: `pq/zorro/src/main.cpp` — 3 dispatch sites in cmd_sign and cmd_verify
 
 - [ ] **Step 1: Update sig_pq_size lookup in cmd_sign (line ~388)**
 
@@ -442,15 +442,15 @@ With:
 
 ---
 
-## Task 8: Build and Test obi-wan
+## Task 8: Build and Test zorro
 
 **Files:** None (build + test only)
 
 - [ ] **Step 1: Reconfigure and build**
 
 ```bash
-cmake -S pq/obi-wan -B pq/obi-wan/build
-cmake --build pq/obi-wan/build -j$(nproc)
+cmake -S pq/zorro -B pq/zorro/build
+cmake --build pq/zorro/build -j$(nproc)
 ```
 
 Expected: Clean compile, no errors.
@@ -458,22 +458,22 @@ Expected: Clean compile, no errors.
 - [ ] **Step 2: Test encrypt/decrypt with mlkem+mldsa trays**
 
 ```bash
-echo "hello obi-wan ml-kem" > /tmp/plain.txt
+echo "hello zorro ml-kem" > /tmp/plain.txt
 
 # mk-level2 (P-256 + ML-KEM-512 + ECDSA P-256 + ML-DSA-44)
-./pq/scotty/build/scotty keygen --group mlkem+mldsa --alias mktest2 --profile level2 --out /tmp/mktest2.tray
-./pq/obi-wan/build/obi-wan encrypt --tray /tmp/mktest2.tray /tmp/plain.txt > /tmp/mk2.armored
-./pq/obi-wan/build/obi-wan decrypt --tray /tmp/mktest2.tray /tmp/mk2.armored | diff /tmp/plain.txt -
+./pq/hybrid/build/hybrid keygen --group mlkem+mldsa --alias mktest2 --profile level2 --out /tmp/mktest2.tray
+./pq/zorro/build/zorro encrypt --tray /tmp/mktest2.tray /tmp/plain.txt > /tmp/mk2.armored
+./pq/zorro/build/zorro decrypt --tray /tmp/mktest2.tray /tmp/mk2.armored | diff /tmp/plain.txt -
 
 # mk-level3
-./pq/scotty/build/scotty keygen --group mlkem+mldsa --alias mktest3 --profile level3 --out /tmp/mktest3.tray
-./pq/obi-wan/build/obi-wan encrypt --tray /tmp/mktest3.tray /tmp/plain.txt > /tmp/mk3.armored
-./pq/obi-wan/build/obi-wan decrypt --tray /tmp/mktest3.tray /tmp/mk3.armored | diff /tmp/plain.txt -
+./pq/hybrid/build/hybrid keygen --group mlkem+mldsa --alias mktest3 --profile level3 --out /tmp/mktest3.tray
+./pq/zorro/build/zorro encrypt --tray /tmp/mktest3.tray /tmp/plain.txt > /tmp/mk3.armored
+./pq/zorro/build/zorro decrypt --tray /tmp/mktest3.tray /tmp/mk3.armored | diff /tmp/plain.txt -
 
 # mk-level4
-./pq/scotty/build/scotty keygen --group mlkem+mldsa --alias mktest4 --profile level4 --out /tmp/mktest4.tray
-./pq/obi-wan/build/obi-wan encrypt --tray /tmp/mktest4.tray /tmp/plain.txt > /tmp/mk4.armored
-./pq/obi-wan/build/obi-wan decrypt --tray /tmp/mktest4.tray /tmp/mk4.armored | diff /tmp/plain.txt -
+./pq/hybrid/build/hybrid keygen --group mlkem+mldsa --alias mktest4 --profile level4 --out /tmp/mktest4.tray
+./pq/zorro/build/zorro encrypt --tray /tmp/mktest4.tray /tmp/plain.txt > /tmp/mk4.armored
+./pq/zorro/build/zorro decrypt --tray /tmp/mktest4.tray /tmp/mk4.armored | diff /tmp/plain.txt -
 ```
 
 Expected: All `diff` commands produce no output (roundtrip OK).
@@ -481,11 +481,11 @@ Expected: All `diff` commands produce no output (roundtrip OK).
 - [ ] **Step 3: Test sign/verify with mlkem+mldsa trays**
 
 ```bash
-./pq/obi-wan/build/obi-wan sign   --tray /tmp/mktest2.tray /tmp/plain.txt > /tmp/mk2.hyke
-./pq/obi-wan/build/obi-wan verify --tray /tmp/mktest2.tray /tmp/mk2.hyke | diff /tmp/plain.txt -
+./pq/zorro/build/zorro sign   --tray /tmp/mktest2.tray /tmp/plain.txt > /tmp/mk2.hyke
+./pq/zorro/build/zorro verify --tray /tmp/mktest2.tray /tmp/mk2.hyke | diff /tmp/plain.txt -
 
-./pq/obi-wan/build/obi-wan sign   --tray /tmp/mktest3.tray /tmp/plain.txt > /tmp/mk3.hyke
-./pq/obi-wan/build/obi-wan verify --tray /tmp/mktest3.tray /tmp/mk3.hyke | diff /tmp/plain.txt -
+./pq/zorro/build/zorro sign   --tray /tmp/mktest3.tray /tmp/plain.txt > /tmp/mk3.hyke
+./pq/zorro/build/zorro verify --tray /tmp/mktest3.tray /tmp/mk3.hyke | diff /tmp/plain.txt -
 ```
 
 Expected: Roundtrip OK.
@@ -494,14 +494,14 @@ Expected: Roundtrip OK.
 
 ```bash
 # ff-level2 (P-256 + FrodoKEM-640-AES + ECDSA P-256 + Falcon-512)
-./pq/scotty/build/scotty keygen --group frodokem+falcon --alias fftest2 --profile level2 --out /tmp/fftest2.tray
-./pq/obi-wan/build/obi-wan encrypt --tray /tmp/fftest2.tray /tmp/plain.txt > /tmp/ff2.armored
-./pq/obi-wan/build/obi-wan decrypt --tray /tmp/fftest2.tray /tmp/ff2.armored | diff /tmp/plain.txt -
+./pq/hybrid/build/hybrid keygen --group frodokem+falcon --alias fftest2 --profile level2 --out /tmp/fftest2.tray
+./pq/zorro/build/zorro encrypt --tray /tmp/fftest2.tray /tmp/plain.txt > /tmp/ff2.armored
+./pq/zorro/build/zorro decrypt --tray /tmp/fftest2.tray /tmp/ff2.armored | diff /tmp/plain.txt -
 
 # ff-level3
-./pq/scotty/build/scotty keygen --group frodokem+falcon --alias fftest3 --profile level3 --out /tmp/fftest3.tray
-./pq/obi-wan/build/obi-wan encrypt --tray /tmp/fftest3.tray /tmp/plain.txt > /tmp/ff3.armored
-./pq/obi-wan/build/obi-wan decrypt --tray /tmp/fftest3.tray /tmp/ff3.armored | diff /tmp/plain.txt -
+./pq/hybrid/build/hybrid keygen --group frodokem+falcon --alias fftest3 --profile level3 --out /tmp/fftest3.tray
+./pq/zorro/build/zorro encrypt --tray /tmp/fftest3.tray /tmp/plain.txt > /tmp/ff3.armored
+./pq/zorro/build/zorro decrypt --tray /tmp/fftest3.tray /tmp/ff3.armored | diff /tmp/plain.txt -
 ```
 
 Expected: Roundtrip OK. (Note: FrodoKEM keys are large ~10-43KB, so generation takes a moment.)
@@ -509,8 +509,8 @@ Expected: Roundtrip OK. (Note: FrodoKEM keys are large ~10-43KB, so generation t
 - [ ] **Step 5: Test sign/verify with frodokem+falcon trays**
 
 ```bash
-./pq/obi-wan/build/obi-wan sign   --tray /tmp/fftest2.tray /tmp/plain.txt > /tmp/ff2.hyke
-./pq/obi-wan/build/obi-wan verify --tray /tmp/fftest2.tray /tmp/ff2.hyke | diff /tmp/plain.txt -
+./pq/zorro/build/zorro sign   --tray /tmp/fftest2.tray /tmp/plain.txt > /tmp/ff2.hyke
+./pq/zorro/build/zorro verify --tray /tmp/fftest2.tray /tmp/ff2.hyke | diff /tmp/plain.txt -
 ```
 
 Expected: Roundtrip OK.
@@ -530,7 +530,7 @@ for i, l in enumerate(lines):
         break
 open('/tmp/mk2.hyke.bad', 'w').write('\n'.join(lines))
 "
-./pq/obi-wan/build/obi-wan verify --tray /tmp/mktest2.tray /tmp/mk2.hyke.bad
+./pq/zorro/build/zorro verify --tray /tmp/mktest2.tray /tmp/mk2.hyke.bad
 echo "exit code: $?"
 ```
 
@@ -539,38 +539,38 @@ Expected: exit code 2, error message about signature INVALID.
 - [ ] **Step 7: Verify existing crystals group trays still work (regression)**
 
 ```bash
-./pq/scotty/build/scotty keygen --alias regtest --profile level2-25519 > /tmp/regtest.tray
-./pq/obi-wan/build/obi-wan encrypt --tray /tmp/regtest.tray /tmp/plain.txt > /tmp/reg.armored
-./pq/obi-wan/build/obi-wan decrypt --tray /tmp/regtest.tray /tmp/reg.armored | diff /tmp/plain.txt -
-./pq/obi-wan/build/obi-wan sign   --tray /tmp/regtest.tray /tmp/plain.txt > /tmp/reg.hyke
-./pq/obi-wan/build/obi-wan verify --tray /tmp/regtest.tray /tmp/reg.hyke | diff /tmp/plain.txt -
+./pq/hybrid/build/hybrid keygen --alias regtest --profile level2-25519 > /tmp/regtest.tray
+./pq/zorro/build/zorro encrypt --tray /tmp/regtest.tray /tmp/plain.txt > /tmp/reg.armored
+./pq/zorro/build/zorro decrypt --tray /tmp/regtest.tray /tmp/reg.armored | diff /tmp/plain.txt -
+./pq/zorro/build/zorro sign   --tray /tmp/regtest.tray /tmp/plain.txt > /tmp/reg.hyke
+./pq/zorro/build/zorro verify --tray /tmp/regtest.tray /tmp/reg.hyke | diff /tmp/plain.txt -
 ```
 
 Expected: All OK — no regression.
 
-- [ ] **Step 8: Commit obi-wan changes**
+- [ ] **Step 8: Commit zorro changes**
 
 ```bash
-git -C pq add obi-wan/src/main.cpp
-git -C pq commit -m "feat(obi-wan): add ML-KEM, ML-DSA, FrodoKEM, Falcon dispatch for encrypt/decrypt/sign/verify"
+git -C pq add zorro/src/main.cpp
+git -C pq commit -m "feat(zorro): add ML-KEM, ML-DSA, FrodoKEM, Falcon dispatch for encrypt/decrypt/sign/verify"
 ```
 
 ---
 
-## Task 9: Fix padme CMakeLists.txt
+## Task 9: Fix penelope CMakeLists.txt
 
 **Files:**
-- Modify: `pq/padme/CMakeLists.txt`
+- Modify: `pq/penelope/CMakeLists.txt`
 
 The current file directly includes source files from `../libcrystals/src` which no longer exists. Replace the entire file content.
 
 - [ ] **Step 1: Rewrite CMakeLists.txt**
 
-Replace the full content of `pq/padme/CMakeLists.txt` with:
+Replace the full content of `pq/penelope/CMakeLists.txt` with:
 
 ```cmake
 cmake_minimum_required(VERSION 3.16)
-project(padme LANGUAGES C CXX)
+project(penelope LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -587,32 +587,32 @@ get_filename_component(_tbb_libdir "${_tbb_loc}" DIRECTORY)
 set(CMAKE_BUILD_RPATH "${_tbb_libdir}" "/usr/local/lib")
 
 # ── Executable ────────────────────────────────────────────────────────────────
-add_executable(padme
+add_executable(penelope
     src/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/lodepng.cpp
 )
 
-target_include_directories(padme PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}   # lodepng.h (at padme root)
+target_include_directories(penelope PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}   # lodepng.h (at penelope root)
     src/                          # encaps_crypto.hpp, bitmap_font.hpp
 )
 
-target_compile_options(padme PRIVATE -O2 -Wall -Wextra)
+target_compile_options(penelope PRIVATE -O2 -Wall -Wextra)
 
-target_link_libraries(padme PRIVATE
+target_link_libraries(penelope PRIVATE
     Crystals::crystals
     OpenSSL::Crypto
 )
 
 # ── Install ───────────────────────────────────────────────────────────────────
-install(TARGETS padme DESTINATION bin)
+install(TARGETS penelope DESTINATION bin)
 ```
 
 - [ ] **Step 2: Verify CrystalsConfig provides the right include path and compile definitions**
 
 The `Crystals::crystals` target exposes:
 - `crystals/crystals.hpp` via `INTERFACE_INCLUDE_DIRECTORIES`
-- `MSGPACK_NO_BOOST` via `INTERFACE_COMPILE_DEFINITIONS` (declared `PUBLIC` in libcrystals CMakeLists.txt) — no need to repeat it in padme's CMakeLists.txt
+- `MSGPACK_NO_BOOST` via `INTERFACE_COMPILE_DEFINITIONS` (declared `PUBLIC` in libcrystals CMakeLists.txt) — no need to repeat it in penelope's CMakeLists.txt
 
 Check that `encaps_crypto.hpp` includes `<crystals/symmetric.hpp>` (it does — already verified). That header is part of the installed crystals package.
 
@@ -622,12 +622,12 @@ Expected: `symmetric.hpp`, `tray.hpp`, `tray_reader.hpp`, etc. are present.
 
 ---
 
-## Task 10: Update padme `is_pq_slot()` and `PROFILES` Table
+## Task 10: Update penelope `is_pq_slot()` and `PROFILES` Table
 
 **Files:**
-- Modify: `pq/padme/src/main.cpp:77-210`
+- Modify: `pq/penelope/src/main.cpp:77-210`
 
-**Key sizes** (standard OQS values, same source as scotty's keygen):
+**Key sizes** (standard OQS values, same source as hybrid's keygen):
 
 | Algorithm | pk bytes | sk bytes |
 |-----------|----------|----------|
@@ -643,7 +643,7 @@ Expected: `symmetric.hpp`, `tray.hpp`, `tray_reader.hpp`, etc. are present.
 | Falcon-512 | 897 | 1281 |
 | Falcon-1024 | 1793 | 2305 |
 
-> **IMPORTANT:** Verify these sizes before committing. Run `./pq/scotty/build/scotty keygen --group mlkem+mldsa --alias x --profile level2` and check the pk/sk field lengths in the YAML output. FrodoKEM sizes in particular should be confirmed.
+> **IMPORTANT:** Verify these sizes before committing. Run `./pq/hybrid/build/hybrid keygen --group mlkem+mldsa --alias x --profile level2` and check the pk/sk field lengths in the YAML output. FrodoKEM sizes in particular should be confirmed.
 
 - [ ] **Step 1: Update is_pq_slot()**
 
@@ -780,15 +780,15 @@ static std::string hyke_level_str(const std::vector<uint8_t>& wire) {
 
 ---
 
-## Task 11: Build and Test padme
+## Task 11: Build and Test penelope
 
 **Files:** None (build + test only)
 
-- [ ] **Step 1: Reconfigure and build padme**
+- [ ] **Step 1: Reconfigure and build penelope**
 
 ```bash
-cmake -S pq/padme -B pq/padme/build
-cmake --build pq/padme/build -j$(nproc)
+cmake -S pq/penelope -B pq/penelope/build
+cmake --build pq/penelope/build -j$(nproc)
 ```
 
 Expected: Clean compile. If missing headers are reported, check `/usr/local/include/crystals/` for the missing file.
@@ -797,13 +797,13 @@ Expected: Clean compile. If missing headers are reported, check `/usr/local/incl
 
 ```bash
 # Generate mk-level2 tray (if not already done from Task 8)
-./pq/scotty/build/scotty keygen --group mlkem+mldsa --alias mktest2 --profile level2 --out /tmp/mktest2.tray
+./pq/hybrid/build/hybrid keygen --group mlkem+mldsa --alias mktest2 --profile level2 --out /tmp/mktest2.tray
 
 # Encaps to PNG
-./pq/padme/build/padme tray-encaps --in-tray /tmp/mktest2.tray --out-png /tmp/mktest2_enc.png --pwfile /dev/stdin <<< "testpassword123"
+./pq/penelope/build/penelope tray-encaps --in-tray /tmp/mktest2.tray --out-png /tmp/mktest2_enc.png --pwfile /dev/stdin <<< "testpassword123"
 
 # Decaps back to tray
-./pq/padme/build/padme tray-decaps --in-png /tmp/mktest2_enc.png --out-tray /tmp/mktest2_recovered.yaml --pwfile /dev/stdin <<< "testpassword123"
+./pq/penelope/build/penelope tray-decaps --in-png /tmp/mktest2_enc.png --out-tray /tmp/mktest2_recovered.yaml --pwfile /dev/stdin <<< "testpassword123"
 
 # Verify key material matches
 diff <(grep "pk:" /tmp/mktest2.tray | head -4) <(grep "pk:" /tmp/mktest2_recovered.yaml | head -4)
@@ -814,9 +814,9 @@ Expected: Encaps succeeds producing PNG; decaps recovers tray; pk fields match.
 - [ ] **Step 3: Test tray-encaps/tray-decaps with frodokem+falcon tray**
 
 ```bash
-./pq/scotty/build/scotty keygen --group frodokem+falcon --alias fftest2 --profile level2 --out /tmp/fftest2.tray
-./pq/padme/build/padme tray-encaps --in-tray /tmp/fftest2.tray --out-png /tmp/fftest2_enc.png --pwfile /dev/stdin <<< "testpassword123"
-./pq/padme/build/padme tray-decaps --in-png /tmp/fftest2_enc.png --out-tray /tmp/fftest2_recovered.yaml --pwfile /dev/stdin <<< "testpassword123"
+./pq/hybrid/build/hybrid keygen --group frodokem+falcon --alias fftest2 --profile level2 --out /tmp/fftest2.tray
+./pq/penelope/build/penelope tray-encaps --in-tray /tmp/fftest2.tray --out-png /tmp/fftest2_enc.png --pwfile /dev/stdin <<< "testpassword123"
+./pq/penelope/build/penelope tray-decaps --in-png /tmp/fftest2_enc.png --out-tray /tmp/fftest2_recovered.yaml --pwfile /dev/stdin <<< "testpassword123"
 diff <(grep "pk:" /tmp/fftest2.tray | head -4) <(grep "pk:" /tmp/fftest2_recovered.yaml | head -4)
 ```
 
@@ -825,7 +825,7 @@ Expected: Roundtrip OK. Note: FrodoKEM keys are large (pk ≈ 9–21KB); the PNG
 - [ ] **Step 4: Wrong password test**
 
 ```bash
-./pq/padme/build/padme tray-decaps --in-png /tmp/mktest2_enc.png --pwfile /dev/stdin <<< "wrongpassword"
+./pq/penelope/build/penelope tray-decaps --in-png /tmp/mktest2_enc.png --pwfile /dev/stdin <<< "wrongpassword"
 echo "exit code: $?"
 ```
 
@@ -834,19 +834,19 @@ Expected: exit code 2, "decryption failed — wrong password" message.
 - [ ] **Step 5: Regression test existing crystals trays**
 
 ```bash
-./pq/scotty/build/scotty keygen --alias padreg --profile level2-25519 --out /tmp/padreg.tray
-./pq/padme/build/padme tray-encaps --in-tray /tmp/padreg.tray --out-png /tmp/padreg_enc.png --pwfile /dev/stdin <<< "testpassword123"
-./pq/padme/build/padme tray-decaps --in-png /tmp/padreg_enc.png --out-tray /tmp/padreg_recovered.yaml --pwfile /dev/stdin <<< "testpassword123"
+./pq/hybrid/build/hybrid keygen --alias padreg --profile level2-25519 --out /tmp/padreg.tray
+./pq/penelope/build/penelope tray-encaps --in-tray /tmp/padreg.tray --out-png /tmp/padreg_enc.png --pwfile /dev/stdin <<< "testpassword123"
+./pq/penelope/build/penelope tray-decaps --in-png /tmp/padreg_enc.png --out-tray /tmp/padreg_recovered.yaml --pwfile /dev/stdin <<< "testpassword123"
 diff <(grep "pk:" /tmp/padreg.tray | head -4) <(grep "pk:" /tmp/padreg_recovered.yaml | head -4)
 ```
 
 Expected: Roundtrip OK — no regression.
 
-- [ ] **Step 6: Commit padme changes**
+- [ ] **Step 6: Commit penelope changes**
 
 ```bash
-git -C pq add padme/CMakeLists.txt padme/src/main.cpp
-git -C pq commit -m "feat(padme): add mlkem+mldsa and frodokem+falcon profile support; migrate to Crystals::crystals"
+git -C pq add penelope/CMakeLists.txt penelope/src/main.cpp
+git -C pq commit -m "feat(penelope): add mlkem+mldsa and frodokem+falcon profile support; migrate to Crystals::crystals"
 ```
 
 ---
@@ -859,15 +859,15 @@ git -C pq commit -m "feat(padme): add mlkem+mldsa and frodokem+falcon profile su
 - [ ] **Step 1: Update libcrystals version references**
 
 Search for `libcrystals-1.1` and replace with `libcrystals-1.2` throughout. Key sections:
-- "scotty Build Notes" section: "Migrated to libcrystals-1.2 backend"
-- "obi-wan Build Notes" section: "Migrated to libcrystals-1.2 backend"
+- "hybrid Build Notes" section: "Migrated to libcrystals-1.2 backend"
+- "zorro Build Notes" section: "Migrated to libcrystals-1.2 backend"
 - "Static Linking Strategy" section: references to `libcrystals-1.1.a`
 - Install command: `sudo bash pq/libcrystals-1.1/install.sh` → `sudo bash pq/libcrystals-1.2/install.sh`
 - Archive path: `/usr/local/lib/libcrystals-1.1.a` → `/usr/local/lib/libcrystals-1.2.a`
 
-- [ ] **Step 2: Update obi-wan Slot selection docs**
+- [ ] **Step 2: Update zorro Slot selection docs**
 
-In "Architecture → obi-wan Architecture", update the "Slot selection" line:
+In "Architecture → zorro Architecture", update the "Slot selection" line:
 
 Old:
 ```
@@ -884,26 +884,26 @@ Sig classical: `{Ed25519,ECDSA P-256,ECDSA P-384,ECDSA P-521}`;
 Sig PQ: `{Dilithium2,Dilithium3,Dilithium5}`, prefix `"SLH-DSA"`, or `oqs_sig::is_oqs_sig()` (ML-DSA-*, Falcon-*).
 ```
 
-- [ ] **Step 3: Add obi-wan Verified Working entries for new profiles**
+- [ ] **Step 3: Add zorro Verified Working entries for new profiles**
 
-Add to the "Verified Working (obi-wan)" section:
+Add to the "Verified Working (zorro)" section:
 ```
 - mlkem+mldsa mk-level2, mk-level3, mk-level4: encrypt/decrypt/sign/verify OK (2026-03-23)
 - frodokem+falcon ff-level2, ff-level3: encrypt/decrypt/sign/verify OK (2026-03-23)
 ```
 
-- [ ] **Step 4: Update padme documentation**
+- [ ] **Step 4: Update penelope documentation**
 
-Add a "padme Tool" section or update the existing one (if any) to note:
+Add a "penelope Tool" section or update the existing one (if any) to note:
 - Supports all mlkem+mldsa and frodokem+falcon profiles
 - Migrated from direct-source-compile to `Crystals::crystals` fat archive
-- Build: `cmake -S pq/padme -B pq/padme/build && cmake --build pq/padme/build -j$(nproc)`
+- Build: `cmake -S pq/penelope -B pq/penelope/build && cmake --build pq/penelope/build -j$(nproc)`
 
 - [ ] **Step 5: Commit CLAUDE.md update**
 
 ```bash
 git -C pq add CLAUDE.md
-git -C pq commit -m "docs: update CLAUDE.md for libcrystals-1.2 and new profile groups in obi-wan/padme"
+git -C pq commit -m "docs: update CLAUDE.md for libcrystals-1.2 and new profile groups in zorro/penelope"
 ```
 
 ---
@@ -913,7 +913,7 @@ git -C pq commit -m "docs: update CLAUDE.md for libcrystals-1.2 and new profile 
 - [ ] **Step 1: Push branch**
 
 ```bash
-git -C pq push origin obi-wan-padme-1.2
+git -C pq push origin zorro-penelope-1.2
 ```
 
 - [ ] **Step 2: Confirm all tasks complete**
@@ -922,31 +922,31 @@ Checklist:
 - [ ] `oqs_kem::is_oqs_kem()` added to library header + impl
 - [ ] `tray_id_byte()` extended for MlKem_Level1-4 and FrodoFalcon_Level1-4
 - [ ] Library rebuilt and reinstalled
-- [ ] obi-wan: 9 dispatch sites updated (4× KEM, 2× sig size/sign/verify, 2× slot finders)
-- [ ] obi-wan: all 4 encrypt/decrypt roundtrips with new profiles pass
-- [ ] obi-wan: sign/verify with mk-level2, ff-level2 pass
-- [ ] padme: CMakeLists.txt migrated to `Crystals::crystals`
-- [ ] padme: `is_pq_slot()` updated; 8 new `PROFILES` entries; TrayType mapping extended
-- [ ] padme: tray-encaps/tray-decaps roundtrip with mk-level2 and ff-level2 pass
+- [ ] zorro: 9 dispatch sites updated (4× KEM, 2× sig size/sign/verify, 2× slot finders)
+- [ ] zorro: all 4 encrypt/decrypt roundtrips with new profiles pass
+- [ ] zorro: sign/verify with mk-level2, ff-level2 pass
+- [ ] penelope: CMakeLists.txt migrated to `Crystals::crystals`
+- [ ] penelope: `is_pq_slot()` updated; 8 new `PROFILES` entries; TrayType mapping extended
+- [ ] penelope: tray-encaps/tray-decaps roundtrip with mk-level2 and ff-level2 pass
 - [ ] CLAUDE.md updated
 
 ---
 
 ## Notes for Implementer
 
-1. **Key size verification**: Before committing the padme `PROFILES` table, verify FrodoKEM/Falcon key sizes by inspecting actual scotty output:
+1. **Key size verification**: Before committing the penelope `PROFILES` table, verify FrodoKEM/Falcon key sizes by inspecting actual hybrid output:
    ```bash
-   ./pq/scotty/build/scotty keygen --group frodokem+falcon --alias x --profile level2 | \
+   ./pq/hybrid/build/hybrid keygen --group frodokem+falcon --alias x --profile level2 | \
      python3 -c "import sys,base64; d=sys.stdin.read(); \
      [print(len(base64.b64decode(l.split(':')[1].strip())), l[:30]) for l in d.split('\n') if 'pk:' in l or 'sk:' in l]"
    ```
 
-2. **FrodoKEM PNG size**: FrodoKEM keys are large (pk: 9–21KB, sk: 19–43KB). The resulting padme PNG for ff-level4 could be very large. This is expected behavior — no fix needed.
+2. **FrodoKEM PNG size**: FrodoKEM keys are large (pk: 9–21KB, sk: 19–43KB). The resulting penelope PNG for ff-level4 could be very large. This is expected behavior — no fix needed.
 
-3. **level1 PQ-only trays (mk-level1, ff-level1)**: obi-wan `encrypt` and `sign` require both a classical KEM slot AND a PQ KEM slot (the guard at line ~119 returns exit 1 if either is missing). Since level1 trays have no classical slot, they will fail `encrypt` and `sign` with a usage error. This is **intentional and out of scope** — the spec's primary use case is hybrid operation (levels 2–4). level1 trays are useful for key archival (padme tray-encaps/decaps) and could be used with a future PQ-only encrypt mode. No code change needed; behavior is consistent with how crystals level1 trays have always worked.
+3. **level1 PQ-only trays (mk-level1, ff-level1)**: zorro `encrypt` and `sign` require both a classical KEM slot AND a PQ KEM slot (the guard at line ~119 returns exit 1 if either is missing). Since level1 trays have no classical slot, they will fail `encrypt` and `sign` with a usage error. This is **intentional and out of scope** — the spec's primary use case is hybrid operation (levels 2–4). level1 trays are useful for key archival (penelope tray-encaps/decaps) and could be used with a future PQ-only encrypt mode. No code change needed; behavior is consistent with how crystals level1 trays have always worked.
 
-4. **mceliece+slhdsa trays**: NOT added to padme's PROFILES in this plan. McEliece public keys are 260KB+ which would produce impractically large PNGs. This is out of scope.
+4. **mceliece+slhdsa trays**: NOT added to penelope's PROFILES in this plan. McEliece public keys are 260KB+ which would produce impractically large PNGs. This is out of scope.
 
-4. **obiwan_level_str() in padme**: The OBIWAN wire format doesn't carry enough information to distinguish mk-level2 from crystals level2 (same CT sizes for ML-KEM-512 vs Kyber512). The pngify display will show "level2" for mk-level2 OBIWAN files. This is a cosmetic limitation — pngify is a visualization tool and correctness of the label is not critical.
+4. **obiwan_level_str() in penelope**: The ZORRO wire format doesn't carry enough information to distinguish mk-level2 from crystals level2 (same CT sizes for ML-KEM-512 vs Kyber512). The pngify display will show "level2" for mk-level2 ZORRO files. This is a cosmetic limitation — pngify is a visualization tool and correctness of the label is not critical.
 
-5. **level1 trays**: mk-level1 and ff-level1 (PQ-only, no classical) are not tested for sign/verify since obi-wan requires all 4 slots for HYKE. They will work for encrypt/decrypt if they have a PQ KEM slot (but obi-wan's encrypt requires both classical AND PQ KEM, so level1 PQ-only won't encrypt either). These trays are useful for key backup/archival but not for obi-wan encrypt/sign.
+5. **level1 trays**: mk-level1 and ff-level1 (PQ-only, no classical) are not tested for sign/verify since zorro requires all 4 slots for HYKE. They will work for encrypt/decrypt if they have a PQ KEM slot (but zorro's encrypt requires both classical AND PQ KEM, so level1 PQ-only won't encrypt either). These trays are useful for key backup/archival but not for zorro encrypt/sign.
