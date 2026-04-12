@@ -553,7 +553,7 @@ static std::vector<uint8_t> dearmor_bytes(const std::string& text, const std::st
 }
 
 // ZORRO wire: "ZORRO001"(8) + kdf(1) + cipher(1) + ct_cl_len u32be(4) + ct_cl + ct_pq_len u32be(4) + ...
-static std::string obiwan_level_str(const std::vector<uint8_t>& wire) {
+static std::string zorro_level_str(const std::vector<uint8_t>& wire) {
     if (wire.size() < 14) return "unknown";
     uint32_t ct_cl_len = (uint32_t(wire[10]) << 24) | (uint32_t(wire[11]) << 16)
                        | (uint32_t(wire[12]) << 8)  |  uint32_t(wire[13]);
@@ -613,15 +613,15 @@ static std::string format_uuid_bytes(const uint8_t* uuid) {
     return buf;
 }
 
-// Compute y_data from format: 1 header line (obiwan/pwenc) → 28; 2 header lines (hyke) → 38
+// Compute y_data from format: 1 header line (zorro/pwenc) → 28; 2 header lines (hyke) → 38
 static unsigned pngify_y_data(const std::string& fmt) {
     if (fmt == "hyke")
         return ZORRO_MARGIN + LINE_SPACING + FONT_H + ENCAPS_GAP;  // 12+10+8+8 = 38
     return ZORRO_MARGIN + FONT_H + ENCAPS_GAP;                     // 12+8+8    = 28
 }
 
-// Make crystals-obiwan iTXt text
-static std::string make_obiwan_text(const std::string& fmt, size_t data_len) {
+// Make crystals-zorro iTXt text
+static std::string make_zorro_text(const std::string& fmt, size_t data_len) {
     std::ostringstream ss;
     ss << "format="   << fmt      << "\n"
        << "data_len=" << data_len << "\n";
@@ -643,7 +643,7 @@ static ZorroMeta parse_zorro_meta(const std::string& text) {
         else if (key == "data_len") m.data_len = std::stoull(val);
     }
     if (m.format.empty() || m.data_len == 0)
-        throw std::runtime_error("crystals-obiwan iTXt chunk is missing required fields");
+        throw std::runtime_error("crystals-zorro iTXt chunk is missing required fields");
     return m;
 }
 
@@ -720,9 +720,9 @@ static ImageResult build_pngify_image(const std::string& fmt,
     return {std::move(pixels), img_w, img_h};
 }
 
-// Write PNG with only a crystals-obiwan iTXt chunk (no crystals-tray chunk)
-static void write_obiwan_png(const ImageResult& img, const std::string& out_file,
-                              const std::string& obiwan_text) {
+// Write PNG with only a crystals-zorro iTXt chunk (no crystals-tray chunk)
+static void write_zorro_png(const ImageResult& img, const std::string& out_file,
+                              const std::string& zorro_text) {
     LodePNGState state;
     lodepng_state_init(&state);
     state.info_raw.colortype = LCT_RGBA;
@@ -732,8 +732,8 @@ static void write_obiwan_png(const ImageResult& img, const std::string& out_file
     state.encoder.auto_convert = 0;
 
     unsigned err = lodepng_add_itext(&state.info_png,
-                                      "crystals-obiwan", "", "crystals-obiwan",
-                                      obiwan_text.c_str());
+                                      "crystals-zorro", "", "crystals-zorro",
+                                      zorro_text.c_str());
     if (err) {
         lodepng_state_cleanup(&state);
         throw std::runtime_error(std::string("iTXt error: ") + lodepng_error_text(err));
@@ -808,7 +808,7 @@ static int cmd_pngify(int argc, char* argv[]) {
 
     // 4. Extract level and UUID
     std::string level_str, uuid_str;
-    if      (fmt == "zorro") level_str = obiwan_level_str(data);
+    if      (fmt == "zorro") level_str = zorro_level_str(data);
     else if (fmt == "hyke")   { level_str = hyke_level_str(data); }
     else                      level_str = pwenc_level_str(data);
 
@@ -823,7 +823,7 @@ static int cmd_pngify(int argc, char* argv[]) {
     ImageResult img = build_pngify_image(fmt, level_str, uuid_str, data);
 
     // 6. Write PNG
-    try { write_obiwan_png(img, out_file, make_obiwan_text(fmt, data.size())); }
+    try { write_zorro_png(img, out_file, make_zorro_text(fmt, data.size())); }
     catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n"; return 3;
     }
@@ -874,21 +874,21 @@ static int cmd_pngout(int argc, char* argv[]) {
     std::vector<uint8_t> pixels(pixels_raw, pixels_raw + img_w * img_h * 4);
     free(pixels_raw);
 
-    // 2. Find crystals-obiwan iTXt chunk
-    std::string obiwan_text;
+    // 2. Find crystals-zorro iTXt chunk
+    std::string zorro_text;
     for (size_t i = 0; i < state.info_png.itext_num; ++i) {
-        if (std::strcmp(state.info_png.itext_keys[i], "crystals-obiwan") == 0)
-            obiwan_text = state.info_png.itext_strings[i];
+        if (std::strcmp(state.info_png.itext_keys[i], "crystals-zorro") == 0)
+            zorro_text = state.info_png.itext_strings[i];
     }
     lodepng_state_cleanup(&state);
 
-    if (obiwan_text.empty()) {
-        std::cerr << "Error: no crystals-obiwan iTXt chunk — not a pngify PNG\n"; return 2;
+    if (zorro_text.empty()) {
+        std::cerr << "Error: no crystals-zorro iTXt chunk — not a pngify PNG\n"; return 2;
     }
 
     // 3. Parse metadata
     ZorroMeta meta;
-    try { meta = parse_zorro_meta(obiwan_text); }
+    try { meta = parse_zorro_meta(zorro_text); }
     catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n"; return 2;
     }
