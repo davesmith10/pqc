@@ -10,14 +10,14 @@ Crystals/
 ├── kyber/avx2/         — Kyber AVX2 source (not used by the CMake tools)
 ├── dilithium/ref/      — Dilithium reference C source; statically compiled into libcrystals-1.2 via CMake
 ├── dilithium/avx2/     — Dilithium AVX2 source (not used by the CMake tools)
-├── XKCP/               — eXtended Keccak Code Package; pre-built libXKCP.so (obi-wan + libcrystals)
+├── XKCP/               — eXtended Keccak Code Package; pre-built libXKCP.so (zorro + libcrystals)
 ├── BLAKE3/             — BLAKE3 source; built + installed to local/ (UUID derivation)
 ├── oneTBB/             — oneTBB source; built + installed to local/ (BLAKE3 parallelism)
 ├── local/              — Shared install prefix for BLAKE3 + TBB (CMake finds them here)
 └── pqc/                — Main project (git root)
     ├── include/        — Shared headers (tray.hpp domain model)
-    ├── scotty/         — Hybrid PQ+classical tray keygen tool (uses libcrystals-1.2)
-    ├── obi-wan/        — Hybrid KEM file encryption tool
+    ├── hybrid/         — Hybrid PQ+classical tray keygen tool (uses libcrystals-1.2)
+    ├── zorro/          — Hybrid KEM file encryption tool
     ├── libcrystals-1.2/ — Consolidated crypto library; installed to /usr/local via install.sh
     ├── misc/           — Utilities (hashpass, etc.)
     └── static-verify/  — Standalone project verifying the static Kyber + Dilithium CMake
@@ -27,23 +27,23 @@ Crystals/
 
 ## Build Commands
 
-**Build scotty** (hybrid PQ+classical tray keygen):
+**Build hybrid** (hybrid PQ+classical tray keygen):
 ```bash
-cmake -S pqc/scotty -B pqc/scotty/build
-cmake --build pqc/scotty/build -j$(nproc)
-# Binary: pqc/scotty/build/scotty
+cmake -S pqc/hybrid -B pqc/hybrid/build
+cmake --build pqc/hybrid/build -j$(nproc)
+# Binary: pqc/hybrid/build/hybrid
 # Requires: libcrystals-1.2 installed to /usr/local (see install.sh below)
 ```
 
-**Build obi-wan** (hybrid KEM file encryption):
+**Build zorro** (hybrid KEM file encryption):
 ```bash
-cmake -S pqc/obi-wan -B pqc/obi-wan/build
-cmake --build pqc/obi-wan/build -j$(nproc)
-# Binary: pqc/obi-wan/build/obi-wan
+cmake -S pqc/zorro -B pqc/zorro/build
+cmake --build pqc/zorro/build -j$(nproc)
+# Binary: pqc/zorro/build/zorro
 # Requires: libcrystals-1.2 installed to /usr/local (see install.sh below)
 ```
 
-**Install libcrystals-1.2** (required by scotty and obi-wan; installs fat static archive + CMake config to /usr/local):
+**Install libcrystals-1.2** (required by hybrid and zorro; installs fat static archive + CMake config to /usr/local):
 ```bash
 sudo bash pqc/libcrystals-1.2/install.sh
 # Use --skip-build to regenerate the CMake/pkg-config files without rebuilding
@@ -61,48 +61,48 @@ sudo bash pqc/libcrystals-1.2/install.sh
 ## Testing
 
 ```bash
-# obi-wan: encrypt → decrypt (YAML tray, defaults)
-./pqc/scotty/build/scotty keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+# zorro: encrypt → decrypt (YAML tray, defaults)
+./pqc/hybrid/build/hybrid keygen --alias alice --profile level2-25519 > /tmp/alice.tray
 echo "hello" > /tmp/plain.txt
-./pqc/obi-wan/build/obi-wan encrypt --tray /tmp/alice.tray /tmp/plain.txt > /tmp/out.armored
-./pqc/obi-wan/build/obi-wan decrypt --tray /tmp/alice.tray /tmp/out.armored | diff /tmp/plain.txt -
+./pqc/zorro/build/zorro encrypt --tray /tmp/alice.tray /tmp/plain.txt > /tmp/out.armored
+./pqc/zorro/build/zorro decrypt --tray /tmp/alice.tray /tmp/out.armored | diff /tmp/plain.txt -
 
-# obi-wan: KMAC + ChaCha20, YAML tray written to file
-./pqc/scotty/build/scotty keygen --alias bob --profile level3 --out /tmp/bob.tray
-./pqc/obi-wan/build/obi-wan encrypt --tray /tmp/bob.tray --kdf KMAC --cipher ChaCha20 /tmp/plain.txt > /tmp/out2.armored
-./pqc/obi-wan/build/obi-wan decrypt --tray /tmp/bob.tray /tmp/out2.armored | diff /tmp/plain.txt -
+# zorro: KMAC + ChaCha20, YAML tray written to file
+./pqc/hybrid/build/hybrid keygen --alias bob --profile level3 --out /tmp/bob.tray
+./pqc/zorro/build/zorro encrypt --tray /tmp/bob.tray --kdf KMAC --cipher ChaCha20 /tmp/plain.txt > /tmp/out2.armored
+./pqc/zorro/build/zorro decrypt --tray /tmp/bob.tray /tmp/out2.armored | diff /tmp/plain.txt -
 
-# obi-wan: encrypt+sign → verify+decrypt (HYKE, all 4 tray types)
-./pqc/scotty/build/scotty keygen --alias alice --profile level2-25519 > /tmp/alice.tray
-./pqc/obi-wan/build/obi-wan encrypt+sign   --tray /tmp/alice.tray /tmp/plain.txt > /tmp/alice.hyke
-./pqc/obi-wan/build/obi-wan verify+decrypt --tray /tmp/alice.tray /tmp/alice.hyke | diff /tmp/plain.txt -
+# zorro: encrypt+sign → verify+decrypt (HYKE, all 4 tray types)
+./pqc/hybrid/build/hybrid keygen --alias alice --profile level2-25519 > /tmp/alice.tray
+./pqc/zorro/build/zorro encrypt+sign   --tray /tmp/alice.tray /tmp/plain.txt > /tmp/alice.hyke
+./pqc/zorro/build/zorro verify+decrypt --tray /tmp/alice.tray /tmp/alice.hyke | diff /tmp/plain.txt -
 
-# obi-wan: sign → verify (pure hybrid digital signature, no encryption)
-./pqc/obi-wan/build/obi-wan sign   --tray /tmp/alice.tray --in-file /tmp/plain.txt > /tmp/plain.sig.yaml
-./pqc/obi-wan/build/obi-wan verify --tray /tmp/alice.tray --in-file /tmp/plain.txt --in-sig /tmp/plain.sig.yaml
+# zorro: sign → verify (pure hybrid digital signature, no encryption)
+./pqc/zorro/build/zorro sign   --tray /tmp/alice.tray --in-file /tmp/plain.txt > /tmp/plain.sig.yaml
+./pqc/zorro/build/zorro verify --tray /tmp/alice.tray --in-file /tmp/plain.txt --in-sig /tmp/plain.sig.yaml
 
-# obi-wan: gentok / valtok (requires level2 tray — P-256 + ECDSA P-256; level2-25519 is rejected)
-./pqc/scotty/build/scotty keygen --alias alice --profile level2 > /tmp/alice_level2.tray
-./pqc/obi-wan/build/obi-wan gentok --tray /tmp/alice_level2.tray --data "hello" > /tmp/tok.bin
-./pqc/obi-wan/build/obi-wan valtok --tray /tmp/alice_level2.tray /tmp/tok.bin
+# zorro: gentok / valtok (requires level2 tray — P-256 + ECDSA P-256; level2-25519 is rejected)
+./pqc/hybrid/build/hybrid keygen --alias alice --profile level2 > /tmp/alice_level2.tray
+./pqc/zorro/build/zorro gentok --tray /tmp/alice_level2.tray --data "hello" > /tmp/tok.bin
+./pqc/zorro/build/zorro valtok --tray /tmp/alice_level2.tray /tmp/tok.bin
 
-# scotty: hybrid tray keygen (crystals group, default)
-./scotty keygen --profile level3 --alias alice                          # YAML to stdout (default)
-./scotty keygen --alias bob                                             # default profile: level2-25519
-./scotty keygen --profile level0 --alias alice                          # classical-only (2 slots)
-./scotty keygen --profile level1 --alias alice                          # PQ-only (2 slots)
-./scotty keygen --alias alice --out alice.tray                          # YAML to file + auto-summary to stdout
-./scotty keygen --alias carol --profile level2-25519 --public           # YAML + companion public YAML (same UUID)
-./scotty keygen --alias carol --profile level3 --public --out carol.tray  # carol.tray + carol.pub.tray
+# hybrid: hybrid tray keygen (crystals group, default)
+./hybrid keygen --profile level3 --alias alice                          # YAML to stdout (default)
+./hybrid keygen --alias bob                                             # default profile: level2-25519
+./hybrid keygen --profile level0 --alias alice                          # classical-only (2 slots)
+./hybrid keygen --profile level1 --alias alice                          # PQ-only (2 slots)
+./hybrid keygen --alias alice --out alice.tray                          # YAML to file + auto-summary to stdout
+./hybrid keygen --alias carol --profile level2-25519 --public           # YAML + companion public YAML (same UUID)
+./hybrid keygen --alias carol --profile level3 --public --out carol.tray  # carol.tray + carol.pub.tray
 
-# scotty: mceliece+slhdsa group
-./scotty keygen --group mceliece+slhdsa --alias alice --profile level1  # 2 slots (PQ-only)
-./scotty keygen --group mceliece+slhdsa --alias alice --profile level2  # 4 slots (P-256 + mc460896f + ECDSA + SLH-DSA)
-./scotty keygen --group mceliece+slhdsa --alias alice --profile level5  # 4 slots (P-256 + mc8192128f + ECDSA + SLH-DSA)
+# hybrid: mceliece+slhdsa group
+./hybrid keygen --group mceliece+slhdsa --alias alice --profile level1  # 2 slots (PQ-only)
+./hybrid keygen --group mceliece+slhdsa --alias alice --profile level2  # 4 slots (P-256 + mc460896f + ECDSA + SLH-DSA)
+./hybrid keygen --group mceliece+slhdsa --alias alice --profile level5  # 4 slots (P-256 + mc8192128f + ECDSA + SLH-DSA)
 
-# scotty: protect / unprotect
-./scotty protect   --in alice.tray --out alice.sec.tray --password-file /tmp/pw.txt
-./scotty unprotect --in alice.sec.tray --out alice.plain.tray --password-file /tmp/pw.txt
+# hybrid: protect / unprotect
+./hybrid protect   --in alice.tray --out alice.sec.tray --password-file /tmp/pw.txt
+./hybrid unprotect --in alice.sec.tray --out alice.plain.tray --password-file /tmp/pw.txt
 
 # Kyber upstream tests (1000 cycles each level)
 cd kyber/ref && make && ./test/test_kyber768
@@ -113,19 +113,19 @@ cd dilithium/ref && make && ./test/test_dilithium3
 
 ## Architecture
 
-### obi-wan Architecture
-obi-wan has three operation modes: **OBIWAN** (encrypt/decrypt using both KEM slots),
+### zorro Architecture
+zorro has three operation modes: **ZORRO** (encrypt/decrypt using both KEM slots),
 **HYKE** (encrypt+sign/verify+decrypt using all four slots — both KEMs for encryption, both sig slots for auth),
 and **pure hybrid digital signature** (sign/verify using both sig slots only — no encryption).
 
 **Source files** (single file after the libcrystals-1.2 migration):
-- `obi-wan/src/main.cpp` — arg parsing, file I/O, and CLI handlers `cmd_encrypt`, `cmd_decrypt`,
+- `zorro/src/main.cpp` — arg parsing, file I/O, and CLI handlers `cmd_encrypt`, `cmd_decrypt`,
   `cmd_encrypt_sign`, `cmd_verify_decrypt`, `cmd_pure_sign`, `cmd_pure_verify`,
   `cmd_gentok`, `cmd_valtok`, `cmd_pwencrypt`, `cmd_pwdecrypt`.
   All crypto delegated to `Crystals::crystals`.
 
 **Library boundary**: The library (`Crystals::crystals`) owns all crypto, KDF, wire-format
-pack/unpack, tray loading, and serialisation. obi-wan owns arg parsing, file I/O, and
+pack/unpack, tray loading, and serialisation. zorro owns arg parsing, file I/O, and
 stdio interaction.
 
 **Library API used** (all `@api-stable` in `crystals/crystals.hpp`):
@@ -134,20 +134,20 @@ stdio interaction.
 - `ec_sig::sign/verify`, `dilithium_sig::sign/verify`, `slhdsa_sig::sign/verify`
 - `derive_key_shake`, `derive_key_kmac`, `derive_key_hyke`, `compute_hyke_ctx`
 - `aes256gcm_encrypt/decrypt`, `chacha20poly1305_encrypt/decrypt`
-- `armor_pack/unpack` (OBIWAN), `hyke_pack/unpack` (HYKE)
+- `armor_pack/unpack` (ZORRO), `hyke_pack/unpack` (HYKE)
 - `cmd_pwencrypt`, `cmd_pwdecrypt`, `cmd_gentok`, `cmd_valtok`
 
 **Link deps**: `Crystals::crystals` (fat static archive; pulls in XKCP, BLAKE3, TBB, yaml-cpp,
 OpenSSL::Crypto, scrypt, Kyber, Dilithium, McEliece, SLH-DSA transitively) +
 `OpenSSL::Crypto` directly (for `openssl/rand.h` RAND_bytes in main.cpp).
 
-**OBIWAN KDF input construction**:
+**ZORRO KDF input construction**:
 - SHAKE256: `SHAKE256(len32(SS_cl)||SS_cl||len32(SS_pq)||SS_pq||len32(CT_cl)||CT_cl||len32(CT_pq)||CT_pq, 32B)`
 - KMAC256: `KMAC256(key=SS_cl, msg=len32(SS_pq)||...|CT_pq, custom="hybrid-kem-file-encryption-v1", 256b)`
 
 **HYKE KDF and context binding**:
-- KDF: `KMAC256(key=ss_cl, msg=ss_pq||CT_cl||CT_pq||salt, custom="obi-wan-hybrid-sig-v1", 256b)` (no len32 prefixes)
-- ctx: `KMAC256(key=pk_cl, msg=pk_pq||"obi-wan-hybrid-sig-v1", outlen=512b)` → 64-byte context
+- KDF: `KMAC256(key=ss_cl, msg=ss_pq||CT_cl||CT_pq||salt, custom="zorro-hybrid-sig-v1", 256b)` (no len32 prefixes)
+- ctx: `KMAC256(key=pk_cl, msg=pk_pq||"zorro-hybrid-sig-v1", outlen=512b)` → 64-byte context
 - Signed region: `ctx || partial_header(80+N+M bytes) || encrypted_payload`
 
 **ECDSA signature format**: P1363 (raw r||s, fixed size) rather than DER, so signature lengths
@@ -160,17 +160,17 @@ KEM PQ: prefix `"Kyber"`, `"mceliece"`, or `oqs_kem::is_oqs_kem()` (ML-KEM-*, Fr
 Sig classical: `{Ed25519,ECDSA P-256,ECDSA P-384,ECDSA P-521}`;
 Sig PQ: `{Dilithium2,Dilithium3,Dilithium5}`, prefix `"SLH-DSA"`, or `oqs_sig::is_oqs_sig()` (ML-DSA-*, Falcon-*).
 
-### scotty Architecture
-scotty generates **hybrid trays** — named bundles of paired PQ+classical key slots, and can
-password-protect/unprotect the secret keys in place. scotty is a thin CLI shell backed entirely
+### hybrid Architecture
+hybrid generates **hybrid trays** — named bundles of paired PQ+classical key slots, and can
+password-protect/unprotect the secret keys in place. hybrid is a thin CLI shell backed entirely
 by `Crystals::crystals` (libcrystals-1.2).
 
 **Source files** (single file after the libcrystals-1.2 migration):
-- `scotty/src/main.cpp` — arg parsing, TTY interaction, password hygiene, file I/O, and
+- `hybrid/src/main.cpp` — arg parsing, TTY interaction, password hygiene, file I/O, and
   CLI handlers `cmd_keygen`, `cmd_protect`, `cmd_unprotect`. All crypto delegated to library.
 
 **Library boundary**: The library (`Crystals::crystals`) owns all crypto and serialisation.
-scotty owns everything that touches a human (arg parsing, TTY password prompts, entropy
+hybrid owns everything that touches a human (arg parsing, TTY password prompts, entropy
 warnings, stdout/stderr) and everything that touches the filesystem.
 
 **Library API used** (all `@api-stable` in `crystals/crystals.hpp`):
@@ -189,13 +189,13 @@ and `openssl/crypto.h` OPENSSL_cleanse in cmd_protect/cmd_unprotect).
 `unprotect --in <f> --out <f>` = decrypt sk fields back to plain `type: tray` YAML.
 
 ### Static Linking Strategy
-**obi-wan** and **scotty**: Both use `libcrystals-1.2.a` — a fat static archive (installed at
+**zorro** and **hybrid**: Both use `libcrystals-1.2.a` — a fat static archive (installed at
 `/usr/local/lib/`) that bundles all 8 PQ ref archives + 3 scrypt archives + McEliece + the
 crystals objects. No separate `add_subdirectory` or `kyber/ref` source needed. Link via the
 `Crystals::crystals` CMake target.
 
 ### RPATH Setup
-Both **scotty** and **obi-wan** use the same RPATH strategy:
+Both **hybrid** and **zorro** use the same RPATH strategy:
 - TBB libdir (derived from `TBB::tbb` imported target location, resolved transitively via
   `CrystalsConfig.cmake`) + `/usr/local/lib` (covers `libXKCP.so` installed there by
   `libcrystals-1.2/install.sh`).
@@ -212,7 +212,7 @@ Both **scotty** and **obi-wan** use the same RPATH strategy:
 
 (Note: Dilithium sk sizes differ from NIST ML-DSA spec; use values from `dilithium/ref/api.h`)
 
-## Verified Working (obi-wan)
+## Verified Working (zorro)
 - All 16 encrypt/decrypt combos: {level2-25519,level2,level3,level5} × {SHAKE,KMAC} × {AES-256-GCM,ChaCha20}: OK
 - All 4 encrypt+sign/verify+decrypt (HYKE) tray types: {level2-25519,level2,level3,level5}: OK
 - 1MB binary file encrypt+sign/verify+decrypt roundtrip: OK
@@ -226,23 +226,23 @@ Both **scotty** and **obi-wan** use the same RPATH strategy:
 - McEliece encrypt+sign/verify+decrypt: level2, level3, level4, level5 roundtrip OK (2026-04-05)
 - McEliece level1 (partial tray) → exit 1 + partial-tray error message (2026-04-05)
 
-## padme Tool
-CLI: `padme tray-encaps --in-tray <file> --out-png <png> --pwfile /dev/stdin`
-     `padme tray-decaps --in-png <png> --out-tray <file> --pwfile /dev/stdin`
+## penelope Tool
+CLI: `penelope tray-encaps --in-tray <file> --out-png <png> --pwfile /dev/stdin`
+     `penelope tray-decaps --in-png <png> --out-tray <file> --pwfile /dev/stdin`
 - Supports all profile groups: crystals (level0–level5), mceliece+slhdsa (level1–level5),
   mlkem+mldsa (mk-level2/3/4), frodokem+falcon (ff-level2/3)
 - Migrated from direct-source-compile to `Crystals::crystals` fat archive (libcrystals-1.2)
-- Build: `cmake -S pqc/padme -B pqc/padme/build && cmake --build pqc/padme/build -j$(nproc)`
-- Binary: `pqc/padme/build/padme`
+- Build: `cmake -S pqc/penelope -B pqc/penelope/build && cmake --build pqc/penelope/build -j$(nproc)`
+- Binary: `pqc/penelope/build/penelope`
 - Exit codes: 0=ok, 2=crypto/wrong password, 3=I/O
 
 ## CMakeLists.txt Paths
-- scotty: `cmake -S pqc/scotty -B pqc/scotty/build` (no CMAKE_PREFIX_PATH needed)
+- hybrid: `cmake -S pqc/hybrid -B pqc/hybrid/build` (no CMAKE_PREFIX_PATH needed)
   - `find_package(Crystals REQUIRED)` — finds from `/usr/local/lib/cmake/crystals`
   - `find_package(OpenSSL REQUIRED)` — for `openssl/ui.h` + `openssl/crypto.h`
   - TBB and BLAKE3 resolved transitively inside CrystalsConfig.cmake
   - RPATH: `CMAKE_BUILD_RPATH` set to TBB libdir + `/usr/local/lib`
-- obi-wan: `cmake -S pqc/obi-wan -B pqc/obi-wan/build` (no CMAKE_PREFIX_PATH needed)
+- zorro: `cmake -S pqc/zorro -B pqc/zorro/build` (no CMAKE_PREFIX_PATH needed)
   - `find_package(Crystals REQUIRED)` — finds from `/usr/local/lib/cmake/crystals`
   - `find_package(OpenSSL REQUIRED)` — for `openssl/rand.h`
   - TBB, BLAKE3, XKCP, scrypt, PQ libs all resolved transitively via CrystalsConfig.cmake

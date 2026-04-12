@@ -26,17 +26,17 @@ in the tray are for the secret keys.
 Trays are not encoded in ASN-1 by default; that would be tedium. No, we use a YAML format
 as our specification: simple, clean, easy to read, and we base64 encode the binary bits.
 
-`scotty` is a command-line application that does nothing but make these trays (it can
+`hybrid` is a command-line application that does nothing but make these trays (it can
 also protect the private keys with a password-based (scrypt) KDF). This level of protection
 is not that different from PKCS12, but it does have the virtue of leaving the public keys
 in full view. For things like signature verification.
 
-`obi-wan` is a command-line application that uses the trays to do encryption and digital signature.
+`zorro` is a command-line application that uses the trays to do encryption and digital signature.
 It has four basic operations:
 
 - **encrypt / decrypt** — Encrypts a file using both the classical KEM slot and the PQ KEM slot
   from the tray. The two shared secrets are combined via a hybrid KDF; the result encrypts the
-  payload with the chosen symmetric cipher. Output: PEM-armored `OBIWAN ENCRYPTED FILE`.
+  payload with the chosen symmetric cipher. Output: PEM-armored `ZORRO ENCRYPTED FILE`.
 
 - **encrypt+sign / verify+decrypt** (HYKE) — Encrypts and signs a file using all four slots in
   the tray: both KEM slots protect the symmetric key, and both signature slots (Ed25519/ECDSA +
@@ -53,38 +53,38 @@ It has four basic operations:
   with the Kyber shared secret. Probably the most secure password-based scheme in the world due
   to its hybrid, layered design.
 
-See [ALGORITHMS.md](ALGORITHMS.md) for details on the OBIWAN and HYKE hybrid algorithms,
+See [ALGORITHMS.md](ALGORITHMS.md) for details on the ZORRO and HYKE hybrid algorithms,
 and [PASSWORD-ENC.md](PASSWORD-ENC.md) for the PWENC password-based encryption scheme.
 
-- **tokens** — obi-wan also provides a simple signed token with 256 bytes of space for
+- **tokens** — zorro also provides a simple signed token with 256 bytes of space for
   assertions. Used for secure login with the [SAREK Secrets Vault](https://github.com/davesmith10/sarek).
 
-`padme` Showing somewhat our flair, padme is a steganographic command-line application
+`penelope` Showing somewhat our flair, penelope is a steganographic command-line application
 that embeds the bytes of a tray into a Portable Network Graphics (png) file. This is mildly
 interesting as it visualizes the key materials.
 
-Note that the bytes are not in a *raw* condition; that would be insecure. Padme provides an 
+Note that the bytes are not in a *raw* condition; that would be insecure. Penelope provides an 
 "encaps" (encapsulate) command that password encrypts the secret keys as it pngifies. 
-It also can "pngify" any obi-wan encrypted file.
+It also can "pngify" any zorro encrypted file.
 
-![](docs/img/padme.png?raw=true)
+![](docs/img/penelope.png?raw=true)
 
 
 # Tools
 
-## scotty — Hybrid Tray Keygen
+## hybrid — Hybrid Tray Keygen
 
 Generates named **hybrid trays** — bundles of paired PQ+classical key slots
 covering both KEM and signature roles.
 
 ```
-scotty keygen [--group crystals|mceliece+slhdsa|mlkem+mldsa|frodokem+falcon]
+hybrid keygen [--group crystals|mceliece+slhdsa|mlkem+mldsa|frodokem+falcon]
               [--profile <level>]
               --alias <name>
               [--out <file>]
               [--public]
-scotty protect   --in <file> --out <file> [--password-file <file>]
-scotty unprotect --in <file> --out <file> [--password-file <file>]
+hybrid protect   --in <file> --out <file> [--password-file <file>]
+hybrid unprotect --in <file> --out <file> [--password-file <file>]
 ```
 
 ### Tray Selection
@@ -158,10 +158,10 @@ Default group: `crystals`. Default profile: `level2-25519`.
 With `--out`, written to `<name>.pub.<ext>`; without `--out`, both YAML documents go to stdout.
 
 
-## obi-wan — Hybrid KEM Encryption and Signing
+## zorro — Hybrid KEM Encryption and Signing
 
-Encrypts and authenticates arbitrary files using a scotty tray. Three operation
-modes — **OBIWAN** (encrypt-only), **HYKE** (encrypt-and-sign), and **pure hybrid
+Encrypts and authenticates arbitrary files using a hybrid tray. Three operation
+modes — **ZORRO** (encrypt-only), **HYKE** (encrypt-and-sign), and **pure hybrid
 digital signature** (sign/verify without encryption).
 
 #### Tray compatibility
@@ -185,23 +185,23 @@ slots. PQ-only trays (level1, mk-level1, ff-level1, mceliece+slhdsa level1) are 
 `gentok`/`valtok` requires an ECDSA P-256 slot specifically: crystals `level2`,
 or mceliece+slhdsa `level2`/`level5`.
 
-#### encrypt / decrypt (OBIWAN)
+#### encrypt / decrypt (ZORRO)
 
 Uses both KEM slots from the tray (classical + PQ), combining their shared
 secrets via a KDF, then encrypting with an AEAD cipher.
 
 ```
-obi-wan encrypt --tray <file> [--kdf SHAKE|KMAC] [--cipher AES-256-GCM|ChaCha20] <target-file>
-obi-wan decrypt --tray <file> <target-file>
+zorro encrypt --tray <file> [--kdf SHAKE|KMAC] [--cipher AES-256-GCM|ChaCha20] <target-file>
+zorro decrypt --tray <file> <target-file>
 ```
 
 - `--kdf`: `SHAKE` (SHAKE256, default) or `KMAC` (KMAC256)
 - `--cipher`: `AES-256-GCM` (default) or `ChaCha20` (ChaCha20-Poly1305)
 - KDF/cipher are stored in the wire header and auto-detected on decrypt
 
-Output armor: `-----BEGIN/END OBIWAN ENCRYPTED FILE-----`
+Output armor: `-----BEGIN/END ZORRO ENCRYPTED FILE-----`
 
-Wire format: `"OBIWAN01"` (8B) + KDF byte + cipher byte + `len32+CT_classical` +
+Wire format: `"ZORRO001"` (8B) + KDF byte + cipher byte + `len32+CT_classical` +
 `len32+CT_pq` + `nonce(12) || tag(16) || ciphertext`
 
 #### pwencrypt / pwdecrypt (PWENC)
@@ -212,8 +212,8 @@ plaintext is encrypted with the Kyber shared secret. No pre-shared keys or tray 
 required.
 
 ```
-obi-wan pwencrypt [--level 512|768|1024] [--scrypt-n 20] <infile> <outfile>
-obi-wan pwdecrypt <infile> <outfile>
+zorro pwencrypt [--level 512|768|1024] [--scrypt-n 20] <infile> <outfile>
+zorro pwdecrypt <infile> <outfile>
 ```
 
 - `--level`: Kyber parameter set — `512`, `768` (default), or `1024`
@@ -222,7 +222,7 @@ obi-wan pwdecrypt <infile> <outfile>
 - All decryption failures produce a single generic error (no oracle distinguishing
   wrong password from tampered ciphertext)
 
-Output armor: `-----BEGIN/END OBIWAN PW ENCRYPTED FILE-----`
+Output armor: `-----BEGIN/END ZORRO PW ENCRYPTED FILE-----`
 
 Security is designed so that recovering the plaintext requires both a break of scrypt
 (to recover the ephemeral Kyber secret key) **and** a break of Kyber's IND-CCA hardness
@@ -236,8 +236,8 @@ encryption, both signature slots for authentication. Provides hybrid classical +
 post-quantum confidentiality and authenticity in a single operation.
 
 ```
-obi-wan encrypt+sign   --tray <file> <target-file>
-obi-wan verify+decrypt --tray <file> <target-file>
+zorro encrypt+sign   --tray <file> <target-file>
+zorro verify+decrypt --tray <file> <target-file>
 ```
 
 - `encrypt+sign` requires a tray with all 4 slots including the signing secret keys
@@ -246,9 +246,9 @@ obi-wan verify+decrypt --tray <file> <target-file>
 
 Output armor: `-----BEGIN/END HYKE SIGNED FILE-----`
 
-**Tray UUID self-verification**: on load, obi-wan recomputes the tray UUID from the
+**Tray UUID self-verification**: on load, zorro recomputes the tray UUID from the
 public key material in each slot (using the same BLAKE3 key-derivation algorithm as
-scotty) and rejects the tray if the stored UUID does not match. This detects accidental
+hybrid) and rejects the tray if the stored UUID does not match. This detects accidental
 corruption or substitution of key material. Trays with a non-v8 UUID are loaded without
 verification (backward compat with pre-UUID-derivation trays).
 
@@ -259,7 +259,7 @@ header\_len (4B) + payload\_len (4B) + tray\_uuid (16B) + salt (32B) +
 
 **Context binding** prevents key-substitution attacks:
 ```
-ctx = KMAC256(key=pk_classical, msg=pk_pq || "obi-wan-hybrid-sig-v1", outlen=512 bits)
+ctx = KMAC256(key=pk_classical, msg=pk_pq || "zorro-hybrid-sig-v1", outlen=512 bits)
 ```
 
 **Signed data**: `ctx(64B) || header_fields_and_ciphertexts || encrypted_payload`
@@ -276,8 +276,8 @@ separately (e.g., the document is already at rest in encrypted storage) and only
 authenticity and integrity are needed.
 
 ```
-obi-wan sign   --tray <file> --in-file <file>
-obi-wan verify --tray <file> --in-file <file> --in-sig <file>
+zorro sign   --tray <file> --in-file <file>
+zorro verify --tray <file> --in-file <file> --in-sig <file>
 ```
 
 **Algorithm**: `M' = tray_uuid(16B) || SHA-256(file_bytes)` is signed independently by
@@ -305,28 +305,28 @@ composite_sig: "BAAAA..."  # base64-encoded composite sig
 recomputes `M'`, and verifies both signatures. Outputs `verified: true` plus the
 same metadata fields on success (without `composite_sig`). Any failure exits 2.
 
-## padme — Tray Steganographic Encapsulator
+## penelope — Tray Steganographic Encapsulator
 
-Renders a scotty tray into a password-protected annotated PNG image. Public key bytes
+Renders a hybrid tray into a password-protected annotated PNG image. Public key bytes
 become plaintext rainbow-colored pixels; private key bytes are encrypted with AES-256-GCM
 in place (scrypt-derived key). The PNG carries decryption metadata in an iTXt chunk and
 can be fully recovered from the image and the original password.
 
 ```
-padme tray-encaps  --in-tray <file>    [--out-png <file.png>] [--pwfile <file>]
-padme tray-decaps  --in-png <file.png> [--out-tray <file>]    [--pwfile <file>]
+penelope tray-encaps  --in-tray <file>    [--out-png <file.png>] [--pwfile <file>]
+penelope tray-decaps  --in-png <file.png> [--out-tray <file>]    [--pwfile <file>]
 ```
 
 Supports all tray profile groups: crystals, mceliece+slhdsa, mlkem+mldsa, frodokem+falcon.
 
-See [padme/README.md](padme/README.md) for the full command reference, encryption scheme,
+See [penelope/README.md](penelope/README.md) for the full command reference, encryption scheme,
 visual layout, and PNG chunk format.
 
 ## libcrystals-1.2 — Consolidated Crypto Library
 
 Fat static archive (`libcrystals-1.2.a`) that bundles all PQ and classical cryptography
 used by the tools — Kyber, Dilithium, McEliece, SLH-DSA, ML-KEM, ML-DSA, FrodoKEM,
-Falcon, scrypt, XKCP, BLAKE3, and oneTBB. All three tools (scotty, obi-wan, padme)
+Falcon, scrypt, XKCP, BLAKE3, and oneTBB. All three tools (hybrid, zorro, penelope)
 link against it via the `Crystals::crystals` CMake target. The public API is a single
 frozen header: `crystals/crystals.hpp`.
 
@@ -343,26 +343,26 @@ version history, dependency list, and install options.
 
 **Prerequisites (all tools)**: CMake ≥ 3.15, GCC/Clang with C++17, OpenSSL 3.
 
-**Additional prerequisites for scotty**: `libcrystals-1.2` installed to `/usr/local` via
+**Additional prerequisites for hybrid**: `libcrystals-1.2` installed to `/usr/local` via
 `sudo bash pqc/libcrystals-1.2/install.sh`. This installs the fat static archive, XKCP shared
 library, and CMake package config. BLAKE3 and oneTBB must be in `Crystals/local/` first;
 see `pqc/BLAKE3-BUILD.md` for the one-time build procedure.
 
-**Additional prerequisites for obi-wan**: `libcrystals-1.2` installed to `/usr/local` via
-`sudo bash pqc/libcrystals-1.2/install.sh` (same as scotty). All crypto deps — Kyber,
+**Additional prerequisites for zorro**: `libcrystals-1.2` installed to `/usr/local` via
+`sudo bash pqc/libcrystals-1.2/install.sh` (same as hybrid). All crypto deps — Kyber,
 Dilithium, ML-KEM, ML-DSA, FrodoKEM, Falcon, McEliece, SLH-DSA, scrypt, BLAKE3, oneTBB,
 XKCP, yaml-cpp — are bundled inside the fat static archive.
 
 **Build individual tools** (from the `Crystals/` root):
 
 ```bash
-# scotty — no CMAKE_PREFIX_PATH needed; uses libcrystals-1.2 from /usr/local
-cmake -S pqc/scotty  -B pqc/scotty/build
-cmake --build pqc/scotty/build -j$(nproc)
+# hybrid — no CMAKE_PREFIX_PATH needed; uses libcrystals-1.2 from /usr/local
+cmake -S pqc/hybrid  -B pqc/hybrid/build
+cmake --build pqc/hybrid/build -j$(nproc)
 
-# obi-wan — no CMAKE_PREFIX_PATH needed; uses libcrystals-1.2 from /usr/local
-cmake -S pqc/obi-wan -B pqc/obi-wan/build
-cmake --build pqc/obi-wan/build -j$(nproc)
+# zorro — no CMAKE_PREFIX_PATH needed; uses libcrystals-1.2 from /usr/local
+cmake -S pqc/zorro -B pqc/zorro/build
+cmake --build pqc/zorro/build -j$(nproc)
 
 ```
 
@@ -403,15 +403,15 @@ Crystals/
 ├── XKCP/                     — eXtended Keccak Code Package; pre-built libXKCP.so (SHAKE/KMAC)
 ├── BLAKE3/                   — BLAKE3 source; built + installed to local/ (UUID derivation)
 ├── oneTBB/                   — oneTBB source; built + installed to local/ (BLAKE3 parallelism)
-├── lodepng/                  — LodePNG source (vendored; PNG encode/decode used by padme)
+├── lodepng/                  — LodePNG source (vendored; PNG encode/decode used by penelope)
 ├── librandombytes-20240318/  — RNG API shim (DJB; used during PQ keygen)
 ├── libcpucycles-20260105/    — CPU cycle counter (DJB; benchmarking only)
 ├── local/                    — Shared install prefix for BLAKE3 + TBB (CMake finds them here)
 └── pqc/                      — Main project (git root)
     ├── include/              — Shared headers (tray.hpp domain model)
-    ├── scotty/               — Hybrid PQ+classical tray keygen tool (uses libcrystals-1.2)
-    ├── obi-wan/              — Hybrid KEM file encryption tool
-    ├── padme/                — Tray steganographic encapsulator (tray → password-protected PNG)
+    ├── hybrid/               — Hybrid PQ+classical tray keygen tool (uses libcrystals-1.2)
+    ├── zorro/                — Hybrid KEM file encryption tool
+    ├── penelope/             — Tray steganographic encapsulator (tray → password-protected PNG)
     ├── libcrystals-1.2/      — Consolidated crypto library; installed to /usr/local via install.sh
     ├── misc/                 — Utilities (hashpass, etc.)
     └── static-verify/        — Standalone project verifying the static Kyber + Dilithium CMake

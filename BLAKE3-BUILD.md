@@ -109,18 +109,18 @@ cmake -S . -B build \
   -DCMAKE_PREFIX_PATH=/mnt/c/Users/daves/OneDrive/Desktop/Crystals/local
 ```
 
-**Runtime:** the final binary loads `libtbb.so.12` at startup.  scotty's CMakeLists.txt
+**Runtime:** the final binary loads `libtbb.so.12` at startup.  hybrid's CMakeLists.txt
 derives the TBB library directory from the imported target and sets `CMAKE_BUILD_RPATH`
 automatically — no `LD_LIBRARY_PATH` required when running from the build tree.
 
 ---
 
-## scotty build command (with BLAKE3 UUID derivation)
+## hybrid build command (with BLAKE3 UUID derivation)
 
 ```sh
-cmake -S pq/scotty -B pq/scotty/build \
+cmake -S pqc/hybrid -B pqc/hybrid/build \
   -DCMAKE_PREFIX_PATH=/mnt/c/Users/daves/OneDrive/Desktop/Crystals/local
-cmake --build pq/scotty/build -j$(nproc)
+cmake --build pqc/hybrid/build -j$(nproc)
 ```
 
 ---

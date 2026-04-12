@@ -1,7 +1,7 @@
 # PWENC — Password-Based Post-Quantum Encryption
 
-This document describes the **PWENC** scheme implemented by `obi-wan pwencrypt` and
-`obi-wan pwdecrypt`. An implementer should be able to reproduce the wire format and
+This document describes the **PWENC** scheme implemented by `zorro pwencrypt` and
+`zorro pwdecrypt`. An implementer should be able to reproduce the wire format and
 encryption/decryption procedures from this document alone.
 
 ---
@@ -201,9 +201,9 @@ The wrap layer uses **no AAD** (aad = ∅, aad_len = 0).
 ### 4.3 Armor
 
 ```
------BEGIN OBIWAN PW ENCRYPTED FILE-----
+-----BEGIN ZORRO PW ENCRYPTED FILE-----
 <base64 lines, 64 characters each>
------END OBIWAN PW ENCRYPTED FILE-----
+-----END ZORRO PW ENCRYPTED FILE-----
 ```
 
 ---
@@ -297,11 +297,11 @@ an oracle to an attacker.
 
 ---
 
-## 8. Comparison with OBIWAN/HYKE
+## 8. Comparison with ZORRO/HYKE
 
-| Property | OBIWAN/HYKE | PWENC |
+| Property | ZORRO/HYKE | PWENC |
 |---|---|---|
-| Key management | Pre-generated hybrid tray (scotty) | Password only; no tray |
+| Key management | Pre-generated hybrid tray (hybrid) | Password only; no tray |
 | Kyber key | Long-term (in tray) | Ephemeral (new per encryption) |
 | Classical KEM | Yes (X25519 / P-curves) | No |
 | Authentication | HYKE only: classical + PQ sig | None (AES-GCM provides integrity) |
@@ -309,8 +309,8 @@ an oracle to an attacker.
 | Post-quantum data key | From tray Kyber slot | From ephemeral Kyber |
 | Suitable for | Secure file exchange, signing | Password-protected archives |
 
-PWENC intentionally omits the classical KEM layer present in OBIWAN/HYKE. The hybrid
-rationale for OBIWAN/HYKE is that if Kyber is broken, the classical KEM still provides
+PWENC intentionally omits the classical KEM layer present in ZORRO/HYKE. The hybrid
+rationale for ZORRO/HYKE is that if Kyber is broken, the classical KEM still provides
 security. PWENC instead relies on Kyber alone for data key confidentiality, accepting
 that a Kyber break would compromise the data key regardless of what classical layer was
 added — because the classical KEM approach requires long-term key infrastructure (a tray)

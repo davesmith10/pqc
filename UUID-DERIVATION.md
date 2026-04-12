@@ -22,7 +22,7 @@ The UUID is derived using **BLAKE3 key-derivation mode** (`blake3_hasher_init_de
 
 Context string (exact UTF-8 bytes, no null terminator):
 ```
-Crystals scotty tray-uuid v1
+Crystals hybrid tray-uuid v1
 ```
 
 BLAKE3's key-derivation mode domain-separates this derivation from any other BLAKE3 use in
@@ -94,7 +94,7 @@ xxxxxxxx-xxxx-8xxx-{8|9|a|b}xxx-xxxxxxxxxxxx
 
 static std::string derive_uuid(const std::vector<Slot>& slots) {
     blake3_hasher h;
-    blake3_hasher_init_derive_key(&h, "Crystals scotty tray-uuid v1");
+    blake3_hasher_init_derive_key(&h, "Crystals hybrid tray-uuid v1");
 
     for (const auto& slot : slots) {
         // Length-prefix the algorithm name (little-endian uint32_t)
@@ -141,11 +141,11 @@ static std::string derive_uuid(const std::vector<Slot>& slots) {
 
 ---
 
-## Guidance for obi-wan: adding UUID self-verification on tray load
+## Guidance for zorro: adding UUID self-verification on tray load
 
-When obi-wan loads a tray it can independently recompute the UUID and reject tampered files.
+When zorro loads a tray it can independently recompute the UUID and reject tampered files.
 
-**Where**: `obi-wan/src/tray_reader.cpp`, at the end of the load function (after slots are
+**Where**: `zorro/src/tray_reader.cpp`, at the end of the load function (after slots are
 populated), before the tray is returned to the caller.
 
 **Slots available**: at that point `tray.slots` is fully populated with `alg_name` and `pk`.
