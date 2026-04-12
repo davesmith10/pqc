@@ -1,18 +1,13 @@
 
-/luke/build/
-/geordi/build/
-/scotty/build/
-/scotty/tmp/
-/obi-wan/build/
+/hybrid/build/
+/penelope/build/
+/zorro/build/
 /msgpack/build/
 /static-verify/build/
 /libcrystals/build/
 /libcrystals-1.0/build/
 /libcrystals-1.1/build/
 /libcrystals-1.2/build/
-/padme/build/
-/padme/tmp/
-/obi-wan/tmp/
 /tmp/
 
 # Prerequisites

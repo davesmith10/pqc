@@ -260,7 +260,7 @@ static void test_ec_sig() {
 
 // ── Section 8: ZORRO armor ────────────────────────────────────────────────────
 
-static void test_obiwan_armor() {
+static void test_zorro_armor() {
     std::printf("=== Section 8: ZORRO armor ===\n");
 
     WireHeader hdr;
@@ -917,7 +917,7 @@ int main() {
         test_ec_kem();
         test_dilithium_sig();
         test_ec_sig();
-        test_obiwan_armor();
+        test_zorro_armor();
         test_symmetric();
         test_pw_wire_format();
         test_token_format();

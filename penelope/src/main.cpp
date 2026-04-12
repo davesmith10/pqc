@@ -421,8 +421,8 @@ static ImageResult build_encaps_image(
     std::array<uint8_t, 3> fg_dark  = {20,  20,  20};
     std::array<uint8_t, 3> bg_white = {255, 255, 255};
 
-    // ── Header line 1: "PADME Tray - <level>" ───────────────────────────────
-    std::string hdr1 = "PADME Tray - " + tray.type_str;
+    // ── Header line 1: "Penelope Tray - <level>" ─────────────────────────────
+    std::string hdr1 = "Penelope Tray - " + tray.type_str;
     draw_text(pixels, img_w, ENCAPS_MARGIN, y_hdr1, hdr1, fg_dark, bg_white);
 
     // ── Header line 2: <uuid> ────────────────────────────────────────────────

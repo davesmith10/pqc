@@ -11,10 +11,14 @@ find_package(TBB REQUIRED)
 
 # ── Library paths ─────────────────────────────────────────────────────────────
 # CMakeLists.txt lives in pq/libcrystals-1.0/; deps are relative from there.
-set(KYBER_REF_DIR     "${CMAKE_SOURCE_DIR}/../../kyber/ref")
-set(DILITHIUM_REF_DIR "${CMAKE_SOURCE_DIR}/../../dilithium/ref")
-set(XKCP_DIR          "${CMAKE_SOURCE_DIR}/../../XKCP")
-set(SCRYPT_DIR        "${CMAKE_SOURCE_DIR}/../../scrypt")
+# Override CRYSTALS_ROOT if building from a worktree or non-standard location.
+if(NOT CRYSTALS_ROOT)
+    set(CRYSTALS_ROOT "${CMAKE_SOURCE_DIR}/../..")
+endif()
+set(KYBER_REF_DIR     "${CRYSTALS_ROOT}/kyber/ref")
+set(DILITHIUM_REF_DIR "${CRYSTALS_ROOT}/dilithium/ref")
+set(XKCP_DIR          "${CRYSTALS_ROOT}/XKCP")
+set(SCRYPT_DIR        "${CRYSTALS_ROOT}/scrypt")
 get_filename_component(KYBER_REF_DIR_ABS  "${KYBER_REF_DIR}"     ABSOLUTE)
 get_filename_component(DIL_REF_DIR_ABS    "${DILITHIUM_REF_DIR}" ABSOLUTE)
 get_filename_component(XKCP_DIR_ABS       "${XKCP_DIR}"          ABSOLUTE)
@@ -33,8 +37,8 @@ get_filename_component(_tbb_libdir "${_tbb_loc}" DIRECTORY)
 set(CMAKE_BUILD_RPATH "${XKCP_LIBDIR}" "${_tbb_libdir}")
 
 # ── Static PQ libraries (via add_subdirectory) ────────────────────────────────
-add_subdirectory(../../kyber/ref     kyber_ref_build)
-add_subdirectory(../../dilithium/ref dilithium_ref_build)
+add_subdirectory("${KYBER_REF_DIR_ABS}"  kyber_ref_build)
+add_subdirectory("${DIL_REF_DIR_ABS}"    dilithium_ref_build)
 
 # ── scrypt sources ────────────────────────────────────────────────────────────
 set(SCRYPT_SOURCES
