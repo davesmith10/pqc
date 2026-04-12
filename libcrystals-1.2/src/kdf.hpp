@@ -78,7 +78,7 @@ inline std::array<uint8_t, 32> derive_key_kmac(
 // HYKE KMAC256 KDF (for sign/verify commands)
 // key     = SS_classical
 // message = SS_pq || CT_classical || CT_pq || salt   (raw concat, no len prefixes)
-// custom  = "obi-wan-hybrid-sig-v1"
+// custom  = "zorro-hybrid-sig-v1"
 // outlen  = 256 bits → 32 bytes
 inline std::array<uint8_t, 32> derive_key_hyke(
     const std::vector<uint8_t>& ss_classical,
@@ -87,8 +87,8 @@ inline std::array<uint8_t, 32> derive_key_hyke(
     const std::vector<uint8_t>& ct_pq,
     const uint8_t salt[32])
 {
-    static const char* kCustom = "obi-wan-hybrid-sig-v1";
-    static const size_t kCustomLen = 21; // strlen("obi-wan-hybrid-sig-v1")
+    static const char* kCustom = "zorro-hybrid-sig-v1";
+    static const size_t kCustomLen = 19; // strlen("zorro-hybrid-sig-v1")
 
     std::vector<uint8_t> msg;
     msg.reserve(ss_pq.size() + ct_classical.size() + ct_pq.size() + 32);
@@ -107,14 +107,14 @@ inline std::array<uint8_t, 32> derive_key_hyke(
 }
 
 // HYKE context binding (key-substitution prevention)
-// ctx = KMAC256(key=pk_classical, msg=pk_pq || "obi-wan-hybrid-sig-v1", outlen=512 bits)
+// ctx = KMAC256(key=pk_classical, msg=pk_pq || "zorro-hybrid-sig-v1", outlen=512 bits)
 // Returns 64-byte context vector committed to both public keys.
 inline std::vector<uint8_t> compute_hyke_ctx(
     const std::vector<uint8_t>& pk_classical,
     const std::vector<uint8_t>& pk_pq)
 {
-    static const char* kDomain    = "obi-wan-hybrid-sig-v1";
-    static const size_t kDomainLen = 21;
+    static const char* kDomain    = "zorro-hybrid-sig-v1";
+    static const size_t kDomainLen = 19;
 
     std::vector<uint8_t> msg;
     msg.reserve(pk_pq.size() + kDomainLen);

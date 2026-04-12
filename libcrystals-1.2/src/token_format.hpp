@@ -9,7 +9,7 @@
 
 // Token Wire Format:
 //
-// [MAGIC 8B "obi-wan\0"][VERSION 2B: 0x01 0x00]
+// [MAGIC 8B "zorro\0\0\0"][VERSION 2B: 0x01 0x00]
 // [TLV fields in ascending tag order]
 // [SIG_LEN 4B BE uint32][SIG_BYTES SIG_LEN B]
 //
@@ -25,7 +25,7 @@
 // Signed bytes: MAGIC(8) || VERSION(2) || TLV[0x01..0x06] (no sig trailer)
 // Algorithm 0x03 (ECDSA-P256-SHA256) → SIG_LEN = 64 bytes
 
-static constexpr uint8_t kTokenMagic[8] = {'o','b','i','-','w','a','n','\0'};
+static constexpr uint8_t kTokenMagic[8] = {'z','o','r','r','o','\0','\0','\0'};
 
 // Algorithm byte values
 static constexpr uint8_t kTokenAlgECDSAP256 = 0x03;

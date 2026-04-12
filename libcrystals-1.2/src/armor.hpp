@@ -5,7 +5,7 @@
 #include <array>
 
 // Wire format (binary, before base64 armoring):
-//   Magic:          8 bytes  "OBIWAN01"
+//   Magic:          8 bytes  "ZORRO001"
 //   KDF:            1 byte   0=SHAKE256, 1=KMAC256
 //   Cipher:         1 byte   0=AES-256-GCM, 1=ChaCha20-Poly1305
 //   CT_classic_len: 4 bytes  big-endian uint32
@@ -17,8 +17,8 @@
 enum class KDFAlg   : uint8_t { SHAKE256 = 0, KMAC256 = 1 };
 enum class CipherAlg: uint8_t { AES256GCM = 0, ChaCha20Poly1305 = 1 };
 
-static constexpr char kArmorBegin[] = "-----BEGIN OBIWAN ENCRYPTED FILE-----";
-static constexpr char kArmorEnd[]   = "-----END OBIWAN ENCRYPTED FILE-----";
+static constexpr char kArmorBegin[] = "-----BEGIN ZORRO ENCRYPTED FILE-----";
+static constexpr char kArmorEnd[]   = "-----END ZORRO ENCRYPTED FILE-----";
 
 struct WireHeader {
     KDFAlg    kdf;

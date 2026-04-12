@@ -41,8 +41,8 @@ struct PwBundle {
     std::vector<uint8_t> data_nonce_tag_ct;      // 12+16+M blob
 };
 
-static constexpr char kPwArmorBegin[] = "-----BEGIN OBIWAN PW ENCRYPTED FILE-----";
-static constexpr char kPwArmorEnd[]   = "-----END OBIWAN PW ENCRYPTED FILE-----";
+static constexpr char kPwArmorBegin[] = "-----BEGIN ZORRO PW ENCRYPTED FILE-----";
+static constexpr char kPwArmorEnd[]   = "-----END ZORRO PW ENCRYPTED FILE-----";
 
 // ── Wire format helpers ───────────────────────────────────────────────────────
 

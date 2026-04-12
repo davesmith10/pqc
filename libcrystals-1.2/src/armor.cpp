@@ -23,7 +23,7 @@ std::string armor_pack(const WireHeader& hdr,
     wire.reserve(10 + 8 + hdr.ct_classical.size() + hdr.ct_pq.size() + payload.size());
 
     // Magic
-    const char* magic = "OBIWAN01";
+    const char* magic = "ZORRO001";
     wire.insert(wire.end(), magic, magic + 8);
 
     // KDF + Cipher
@@ -95,7 +95,7 @@ WireHeader armor_unpack(const std::string& armored,
     const uint8_t* p = wire.data();
 
     // Check magic
-    if (std::memcmp(p, "OBIWAN01", 8) != 0)
+    if (std::memcmp(p, "ZORRO001", 8) != 0)
         throw std::runtime_error("armor_unpack: invalid magic");
     p += 8;
 
