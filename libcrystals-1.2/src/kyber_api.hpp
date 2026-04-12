@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <stdexcept>
 
-// Merged Kyber API: keypair (scotty) + encaps/decaps (obi-wan)
+// Merged Kyber API: keypair (hybrid) + encaps/decaps (zorro)
 
 extern "C" {
 

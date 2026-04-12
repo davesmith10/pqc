@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <stdexcept>
 
-// Merged Dilithium API: keypair (scotty) + sign/verify (obi-wan)
+// Merged Dilithium API: keypair (hybrid) + sign/verify (zorro)
 
 extern "C" {
 

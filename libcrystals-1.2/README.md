@@ -1,6 +1,6 @@
 # libcrystals v1.2
 
-Hybrid post-quantum crypto library with a frozen public API, backend for scotty, obi-wan, and padme.
+Hybrid post-quantum crypto library with a frozen public API, backend for hybrid, zorro, and penelope.
 
 ## API contract
 

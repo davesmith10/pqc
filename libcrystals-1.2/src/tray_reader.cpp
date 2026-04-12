@@ -60,12 +60,12 @@ static Tray load_tray_yaml(const std::string& path) {
 
 // ── UUID self-verification ────────────────────────────────────────────────────
 // Recomputes the tray UUID from public key material using the same BLAKE3
-// key-derivation algorithm as scotty.  Rejects trays whose stored UUID does
+// key-derivation algorithm as hybrid.  Rejects trays whose stored UUID does
 // not match the derived value, detecting accidental corruption or key substitution.
 
 static std::string derive_uuid(const std::vector<Slot>& slots) {
     blake3_hasher h;
-    blake3_hasher_init_derive_key(&h, "Crystals scotty tray-uuid v1");
+    blake3_hasher_init_derive_key(&h, "Crystals hybrid tray-uuid v1");
 
     for (const auto& slot : slots) {
         uint32_t name_len = static_cast<uint32_t>(slot.alg_name.size());

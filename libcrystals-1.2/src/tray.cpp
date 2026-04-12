@@ -20,7 +20,7 @@
 
 static std::string derive_uuid(const std::vector<Slot>& slots) {
     blake3_hasher h;
-    blake3_hasher_init_derive_key(&h, "Crystals scotty tray-uuid v1");
+    blake3_hasher_init_derive_key(&h, "Crystals hybrid tray-uuid v1");
 
     for (const auto& slot : slots) {
         // Length-prefix the algorithm name (little-endian uint32_t)
